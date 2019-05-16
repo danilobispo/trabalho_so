@@ -11,32 +11,28 @@
 
 #include "global.h"
 
-
-#define N_NOS 15
-#define KEY 123
-
+//2^n-1 = numeros de processos criados por n forks
+#define N_NOS 4
 
 
-typedef struct
-{
-	int id_pid;
-	int id_no;
-}arvore_processos;
+
 
 
 
 
 // int cont_no = 0;
 
-// char *path = "fattree.c" ;
-pid_t pid; 
-arvore_processos arvore[N_NOS];
-char msg_recebida[TAM_MSG];
+
+int pid;
+int no_ref;
+int msgid;
 
 
-void print_arvore(arvore_processos arvore[]);
 void cria_fattree(void);
-void mensagem_no_raiz(int signum);
+// void transmite_msg(mensagem);
+// void roteamento_msg(mensagem);
+void registra_processo(void);
+void guarda_ref(void);
 
 
 

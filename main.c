@@ -10,69 +10,109 @@
 
 int main(int argc, char const *argv[])
 {
-	// char msg[TAM_MSG] = "ARQUIVO.exe";
-	char pid_no0[TAM_MSG];
-	int pid_no_fattree;
-	int msgid;
-	char *path = "fattree.c" ;
-	tabela_processos tab_proc[15];
+
 	mensagem msg;
+	int contador_no_ref = 0;
 
 
 
+	pid_principal = getpid();
 
-	//dois pipes sao criados para comunicacao
-	//entre escalonador e no raiz
-    // if(pipe(tubo_esc_no) <0 || pipe(tubo_no_esc) <0) 
-    // {
-    //     perror("pipe") ;
-    //     return -1 ;
-    // }
+	printf("PAI ESC %d\n", pid_principal);
 
 
 
-    /*
-     * criacao de uma fila de mensagens para leitura se
-     * ela ainda nao existe
-     */
-    key_fila_msg = ftok(path,(key_t)KEY);
-	if (( msgid = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
-	     perror("Erro de msgget") ;
-	     exit(1) ;
-	}
-   	printf("identificador da fila: %d\n",msgid) ;
-   	// printf("esta fila esta associada a chave unica : %#x\n",ftok(path,(key_t)KEY)) ;
+	cria_fila_mensagem();
 
-
+	/* 
+	* funcao que cria os processos
+	*/
 	cria_fattree();
-	//o escalonador recebe o pid do no raiz do fat tree
-	//e armazena
-	if (msgrcv(msgid, &msg, sizeof(msg), TYPE_NO_0, 0) == -1) {
-	   perror("Erro na recepcao da mensagem") ;
-	   exit(1) ;
-	}
-	printf("PID NO RAIZ %d\n", msg.pid);
-	// read(tubo_no_esc[0], pid_no0, sizeof(pid_no0));
-	// pid_no_fattree = atoi(pid_no0);
-	if (pid_no_fattree != 0)
+
+
+	/* 
+	* o escalonador recebe os pids dos processos fat tree
+	* e armazena na tabela de processos
+	* no final eclui a fila de mensagens
+	*/
+	if (getpid() == pid_principal)
 	{
-		tab_proc[0].id_pid = msg.pid;
-		tab_proc[0].id_no = 0;
-		tab_proc[0].livre = msg.livre;
+		while(contador_no_ref < 15)
+		{
+			if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_ESC, IPC_NOWAIT) < 0) {
+			   // perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
+			}
+			else
+			{
+				tab_proc[contador_no_ref].pid = msg.pid;
+				tab_proc[contador_no_ref].no_ref = contador_no_ref;
+				tab_proc[contador_no_ref].livre = msg.livre;
+				// printf("PID NO RAIZ -> %d | %d\n", msg.no_source, contador_no_ref);
+
+
+				notifica_filho_ref(msg, contador_no_ref);
+
+
+				contador_no_ref++;	
+
+
+			}
+		}
+
+		exclui_fila_mensagem();
 	}
-
-
-
-
-
-
-	
-
-	// write(tubo_esc_no[1], msg, sizeof(msg) + 1);
-	// kill(pid_no_fattree, SIGUSR1);
-
-	// printf("enviou kill\n");
 	
 
 	return 0;
+}
+
+
+
+/*
+* criacao de uma fila de mensagens para leitura se
+* ela ainda nao existe
+*/
+void cria_fila_mensagem(void)
+{
+    key_fila_msg = KEY;
+	if (( msgid = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
+	     perror("Erro de msgget") ;
+	}
+
+}
+
+
+/*
+* exclui a fila de mensagem
+*/
+void exclui_fila_mensagem(void)
+{
+	if( msgctl(msgid, IPC_RMID, 0) < 0)
+	{
+		perror("[ESCALONADOR]Erro na exclusao da fila");
+	}
+	else
+	{
+		printf("EXCLUI LISTA DE MENSAGEM\n");
+	}
+}
+
+
+
+void notifica_filho_ref(mensagem msg, int no_ref)
+{
+    /*
+	* devolve ao processo a mensagem
+	* com sua respectiva referencia
+	*/
+	msg.mtype  = msg.pid; /*coloca type_no_0 quando quer enviar para o escalonador*/
+	// msg.pid = pid;
+	msg.no_source = no_ref+1; /*TYPE_NO_eu*/
+	msg.no_dest = msg.pid;
+	(void) strcpy(msg.mtext,"no ref") ;
+
+	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
+	}
+
 }
