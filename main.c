@@ -47,19 +47,17 @@ int main(int argc, char const *argv[])
 				tab_proc[contador_no_ref].pid = msg.pid;
 				tab_proc[contador_no_ref].no_ref = contador_no_ref;
 				tab_proc[contador_no_ref].livre = msg.livre;
-				// printf("PID NO RAIZ -> %d | %d\n", msg.no_source, contador_no_ref);
-
 
 				notifica_filho_ref(msg, contador_no_ref);
 
 
 				contador_no_ref++;	
-
-
 			}
 		}
 
-		exclui_fila_mensagem();
+		ordem_executa_programa();
+		while(1);
+		// exclui_fila_mensagem();
 	}
 	
 
@@ -107,12 +105,37 @@ void notifica_filho_ref(mensagem msg, int no_ref)
 	*/
 	msg.mtype  = msg.pid; /*coloca type_no_0 quando quer enviar para o escalonador*/
 	// msg.pid = pid;
-	msg.no_source = no_ref+1; /*TYPE_NO_eu*/
-	msg.no_dest = msg.pid;
+	msg.no_source = pid_principal; /*TYPE_NO_eu*/
+	msg.no_dest = no_ref+1;
 	(void) strcpy(msg.mtext,"no ref") ;
 
 	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
 	}
+}
 
+
+
+void ordem_executa_programa(void)
+{
+	mensagem msg;
+
+    /*
+	* enviado para o escalonador dados do processo
+	* notificando que já foi criado e está livre
+	*/
+	msg.mtype  = TYPE_NO_1; //coloca type_no_0 quando quer enviar para o escalonador
+	msg.pid = pid_principal;
+	msg.no_source = TYPE_ESC; /*TYPE_NO_eu*/
+	msg.no_dest = TYPE_ALL;
+	msg.livre = false;
+	(void) strcpy(msg.mtext,"a.out") ;
+
+	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
+	}
+	else
+	{
+		kill(tab_proc[0].pid, SIGUSR1);
+	}
 }
