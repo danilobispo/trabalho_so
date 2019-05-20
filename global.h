@@ -19,14 +19,16 @@
 
 #define TAM_MSG 100
 //quantos bytes tem na struct da mensagem
-//100(vetor)+4(int)+1(bool)+4(int)+4(int)
-#define TAM_TOTAL_MSG 113
+//100(vetor)+4(int)+1(bool)+4(int)+4(int)+4(int)
+#define TAM_TOTAL_MSG 117
 #define KEY 123
+#define N_NOS_FATTREE 15
 
 
 
 enum types_mensagens { TYPE_NO_1 = 1, TYPE_NO_2, TYPE_NO_3, TYPE_NO_4, TYPE_NO_5, TYPE_NO_6, TYPE_NO_7,
-TYPE_NO_8, TYPE_NO_9, TYPE_NO_10, TYPE_NO_11, TYPE_NO_12, TYPE_NO_13, TYPE_NO_14, TYPE_NO_15, TYPE_ESC, TYPE_ALL} types_msg;
+TYPE_NO_8, TYPE_NO_9, TYPE_NO_10, TYPE_NO_11, TYPE_NO_12, TYPE_NO_13, TYPE_NO_14, TYPE_NO_15, TYPE_ESC, TYPE_ALL,
+TYPE_INI, TYPE_EXEC, TYPE_FIN, TYPE_STOP} types_msg;
 
 
 typedef struct
@@ -43,6 +45,7 @@ typedef struct
     int pid;
     int no_source;
     int no_dest;
+    int operacao;
     bool livre;
     char mtext[TAM_MSG];
 }mensagem;
@@ -62,6 +65,10 @@ void cria_fila_mensagem(void);
 void exclui_fila_mensagem(void);
 void notifica_filho_ref(mensagem msg, int no_ref);
 void ordem_executa_programa(void);
+void espera_resultado_execucao(void);
+void marca_gerente_livre(int ref);
+int is_todos_livres(void);
+int search_proc(int ref, int option);
 
 
 #endif

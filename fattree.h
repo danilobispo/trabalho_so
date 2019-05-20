@@ -17,6 +17,12 @@
 
 
 
+typedef struct
+{
+	int pid;
+	int no_ref;
+}nos;
+
 
 
 
@@ -27,18 +33,19 @@
 int pid;
 int no_ref;
 int msgid;
-int vetor_folhas[8] = {4, 5, 7, 8, 14, 15, 12, 11};
-int vetor_nos[14];
+// int folhas_vet[8] = {4, 5, 7, 8, 14, 15, 12, 11};
+nos nos_vetor[N_NOS];
 
 
 void cria_fattree(void);
-void executa_programa(int signum);
+void executa_programa(void);
 void roteamento_msg(mensagem);
 void registra_processo(void);
 void guarda_ref(void);
-void acorda_filhos(void);
-void fim_programa(int signum);
+void fim_programa(void);
 int is_folha(void);
+void comunica_no_raiz(void);
+void trata_mensagem(char *programa);
 
 
 

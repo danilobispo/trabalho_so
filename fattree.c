@@ -23,18 +23,83 @@ void cria_fattree()
 
 	if (getpid() != pid_principal)
 	{
+		//---------------------------------------------
+		/*
+		* boloc de codigo que cria tudo que é necessario
+		* para a topologia funcionar
+		*/
 		registra_processo();
 
 		guarda_ref();
+		
+		comunica_no_raiz();
 
-		//TODO:no 1 pega todos os PIDS e guarda em um vetor
 
-		// printf("NO %d | %d\n", pid, no_ref);
-
-		signal(SIGUSR1, executa_programa);
-		signal(SIGUSR2, fim_programa);
+		executa_programa();
+		//---------------------------------------------
 
 		while(1);
+	}
+}
+
+
+
+void comunica_no_raiz(void)
+{
+	mensagem msg, msg_rcv;
+	int contador_nos = 0;
+
+	// if (no_ref != TYPE_NO_1)
+	// {
+	    /*
+		* enviado para o escalonador dados do processo
+		* notificando que já foi criado e está livre
+		*/
+		msg.mtype  = TYPE_NO_1;
+		msg.pid = pid;
+		msg.no_source = no_ref;
+		msg.no_dest = TYPE_NO_1;
+		msg.livre = true;
+		msg.operacao = 0;
+		(void) strcpy(msg.mtext,"comunica no 1") ;
+
+
+		if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+		   perror("[CRIANDO]Erro no envio da mensagem");
+		}
+	// }
+	if (no_ref == TYPE_NO_1)
+	{
+		while(contador_nos < N_NOS)
+		{
+			if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_NO_1, IPC_NOWAIT) < 0)
+			{
+				// perror("[TRANSMITE]Erro na recepcao da mensagem");
+			}
+			else
+			{
+				if (msg.operacao == 0)
+				{
+					nos_vetor[contador_nos].no_ref = msg.no_source;
+					nos_vetor[contador_nos].pid = msg.pid;
+					// printf("[PROC 1]VETOR %d | %d\n", nos_vetor[contador_nos].no_ref, nos_vetor[contador_nos].pid);
+					contador_nos++;
+				}
+			}
+		}
+
+		//verificando se tudo o setup terminou
+		msg.mtype  = TYPE_ESC;
+		msg.pid = pid;
+		msg.no_source = no_ref;
+		msg.no_dest = TYPE_ESC;
+		msg.livre = true;
+		msg.operacao = 0;
+		(void) strcpy(msg.mtext,"topologia feita!") ;
+		if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+		   perror("[CRIANDO]Erro no envio da mensagem");
+		}
+		//--------------------------------------
 	}
 }
 
@@ -46,7 +111,10 @@ void guarda_ref(void)
 	while(msgrcv(msgid, &msg, TAM_TOTAL_MSG, getpid(), IPC_NOWAIT) < 0)
 	{}
 
-	no_ref = msg.no_dest;
+	if (msg.operacao == TYPE_INI)
+	{
+		no_ref = msg.no_dest;
+	}
 }
 
 void registra_processo(void)
@@ -63,96 +131,117 @@ void registra_processo(void)
 	msg.pid = pid;
 	msg.no_source = pid; /*TYPE_NO_eu*/
 	msg.no_dest = TYPE_ESC;
+	msg.operacao = TYPE_INI;
 	msg.livre = true;
 	(void) strcpy(msg.mtext,"no criado") ;
+
 
 	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 	   perror("[CRIANDO]Erro no envio da mensagem") ;
 	}
 }
 
-//somente no 0 vai usar
-void acorda_filhos(void)
+
+void trata_mensagem(char *programa)
 {
-	for (int i = 1; i < N_NOS; ++i)
+	pid_t pid_exec;
+	int status;
+
+	pid_exec = fork();
+
+	if (pid_exec == 0)
 	{
-		kill(tab_proc[i].pid, SIGUSR1);
+		//filho
+      	execl("./a.out", programa, 0, 0);
+      	perror("execl() failure!\n\n");
+
+		exit(1);	
+	}
+	else
+	{
+		//pai
+		wait(&status);
 	}
 }
 
-
-
-void executa_programa(int signum)
+void executa_programa(void)
 {
 	mensagem msg;
-
-	if(no_ref == TYPE_1) acorda_filhos();
 
 	while(1)
 	{
 		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, no_ref, IPC_NOWAIT) < 0) {
-			// printf("NO %d\n", no_ref);
 	   		// perror("[TRANSMITE]Erro na recepcao da mensagem") ;
 		}
 		else
 		{
-		    msg.pid = pid;
-		    msg.no_source = no_ref;
+			if(msg.operacao == TYPE_EXEC)
+			{
+			    msg.pid = pid;
+			    msg.no_source = no_ref;
 
-	    	roteamento_msg(msg);
+		    	roteamento_msg(msg);
 
-			printf("TRATA MENSAGEM = %d\n", getpid());
+		    	trata_mensagem(msg.mtext);
 
-			// wait();
+				fim_programa();
 
-			kill(pid, SIGUSR2);
-
-			break;
-
-		    /* 
-		    * se a mensagem não for para mim repassa
-		    * se for, trata
-		    */
+				// break;
+			}
 		}
-
-		// contador ++;
-		// break;
 	}
+	// printf("------------>FINALIZE EXEC %d\n", no_ref);
 }
 
 
-void fim_programa(int signum)
+void fim_programa(void)
 {
 	mensagem msg;
 	int contador_roteamento = 0;
 
-	msg.mtype  = TYPE_1; //coloca type_no_0 quando quer enviar para o escalonador
+	msg.mtype  = no_ref; //coloca type_no_0 quando quer enviar para o escalonador
 	msg.pid = pid;
-	msg.no_source = pid; /*TYPE_NO_eu*/
+	msg.no_source = no_ref; /*TYPE_NO_eu*/
 	msg.no_dest = TYPE_ESC;
 	msg.livre = true;
+	msg.operacao = TYPE_FIN;
 	(void) strcpy(msg.mtext,"no terminou exec") ;
-
+	
 	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 	   perror("[CRIANDO]Erro no envio da mensagem") ;
 	}
 
+
 	while(1)
 	{
 		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, no_ref, IPC_NOWAIT) < 0) {
-			// printf("NO %d\n", no_ref);
 	   		// perror("[TRANSMITE]Erro na recepcao da mensagem") ;
 		}
 		else
 		{
-	    	roteamento_msg(msg);
+			if (msg.operacao == TYPE_FIN)
+			{
+		    	roteamento_msg(msg);
 
-	    	if ((contador_roteamento == 2) || is_folha())
-	    	{
-	    		break;
-	    	}
+		    	contador_roteamento++;
 
-	    	contador_roteamento++;
+		    	if (is_folha())
+		    	{
+		    		break;
+		    	}
+		    	else if (((no_ref == 2) ||  (no_ref == 9)) && (contador_roteamento == 7))
+		    	{
+		    		break;
+		    	}
+		    	else if (((no_ref == 3) ||  (no_ref == 6) || (no_ref == 13) || (no_ref == 10)) && (contador_roteamento == 3))
+				{
+					break;
+				}
+		    	else if ((no_ref == 1) && (contador_roteamento == 15))
+				{
+					break;
+				}
+			}
 		}
 	}
 }
@@ -161,18 +250,21 @@ void fim_programa(int signum)
 void roteamento_msg(mensagem msg)
 {
 	int type_all = 0; 
+	int type_escalonador = 0;
 	if(msg.no_dest == TYPE_ALL) type_all = 1;
+	if(msg.no_dest == TYPE_ESC) type_escalonador = 1;
+	// printf("[%d]PARA TODOS = %d -> %d\n",msg.operacao, no_ref, type_all);
 	
-	switch(msg.no_source)
+	switch(msg.mtype)
 	{
 		case TYPE_NO_4:
 		case TYPE_NO_5:
-			if (!type_all)
+			if (type_escalonador)
 			{
 				// enviar para no 3
-				printf("ROTEAR PARA NO 3 -> %d\n", no_ref);
+				// printf("ROTEAR PARA NO 3 -> %d\n", no_ref);
 				msg.mtype  = TYPE_NO_3;
-				msg.no_dest  = TYPE_NO_3;
+				// msg.no_dest  = TYPE_NO_3;
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
@@ -180,10 +272,10 @@ void roteamento_msg(mensagem msg)
 			break;
 		case TYPE_NO_7:
 		case TYPE_NO_8:
-			if (!type_all)
+			if (type_escalonador)
 			{
 				//enviar para no 6
-				printf("ROTEAR PARA NO 6 -> %d\n", no_ref);
+				// printf("ROTEAR PARA NO 6 -> %d\n", no_ref);
 				msg.mtype = TYPE_NO_6;
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
@@ -192,10 +284,10 @@ void roteamento_msg(mensagem msg)
 			break;
 		case TYPE_NO_14:
 		case TYPE_NO_15:
-			if (!type_all)
+			if (type_escalonador)
 			{
 				//enviar para no 13
-				printf("ROTEAR PARA NO 13 -> %d\n", no_ref);
+				// printf("ROTEAR PARA NO 13 -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_NO_13;
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
@@ -204,10 +296,10 @@ void roteamento_msg(mensagem msg)
 			break;
 		case TYPE_NO_12:
 		case TYPE_NO_11:
-			if (!type_all)
+			if (type_escalonador)
 			{
 				//enviar para no 10
-				printf("ROTEAR PARA NO 10 -> %d\n", no_ref);
+				// printf("ROTEAR PARA NO 10 -> %d\n", no_ref);
 				msg.mtype = TYPE_NO_10;
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
@@ -216,23 +308,24 @@ void roteamento_msg(mensagem msg)
 			break;
 		case TYPE_NO_3:
 		case TYPE_NO_6:
-
 			if (type_all)
 			{
-				printf("ROTEAR PARA NO 4|7 -> %d\n", no_ref);
 				msg.mtype += 1;
+				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
-				printf("ROTEAR PARA NO 5|8 -> %d\n", no_ref);
-				msg.mtype += 2;
+				
+				msg.mtype += 1;
+				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
-			else{
+			else if(type_escalonador)
+			{
 				//enviar para no 2
-				printf("ROTEAR PARA NO 2 -> %d\n", no_ref);
+				// printf("ROTEAR PARA NO 2 -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_NO_2;
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
@@ -241,23 +334,23 @@ void roteamento_msg(mensagem msg)
 			break;
 		case TYPE_NO_13:
 		case TYPE_NO_10:
-
 			if (type_all)
 			{
-				printf("ROTEAR PARA NO 14|11 -> %d\n", no_ref);
 				msg.mtype += 1;
+				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
-				printf("ROTEAR PARA NO 15|12 -> %d\n", no_ref);
-				msg.mtype += 2;
+				msg.mtype += 1;
+				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
-			else{
+			else if (type_escalonador)
+			{
 				//enviar para no 1
-				printf("ROTEAR PARA NO 9 -> %d\n", no_ref);
+				// printf("ROTEAR PARA NO 9 -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_NO_9;
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
@@ -266,23 +359,24 @@ void roteamento_msg(mensagem msg)
 			break;
 		case TYPE_NO_9:
 		case TYPE_NO_2:
-
 			if (type_all)
 			{
-				printf("ROTEAR PARA NO 3|10 -> %d\n", no_ref);
 				msg.mtype += 1;
+				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
-				printf("ROTEAR PARA NO 6|13 -> %d\n", no_ref);
-				msg.mtype += 4;
+				
+				msg.mtype += 3;
+				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
-			else{
+			else if(type_escalonador)
+			{
 				//enviar para no 0
-				printf("ROTEAR PARA NO 0 -> %d\n", no_ref);
+				// printf("ROTEAR PARA NO 1 -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_NO_1;
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
@@ -290,29 +384,27 @@ void roteamento_msg(mensagem msg)
 			}
 			break;
 		default:
-			//enviar escalonador
 			if (type_all)
 			{
-				printf("ROTEAR PARA NO 2 -> %d\n", no_ref);
+				// printf("ROTEAR PARA NO 2 -> %d\n", no_ref);
 				msg.mtype = TYPE_NO_1+1;
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
-				printf("ROTEAR PARA NO 9 -> %d\n", no_ref);
+				// printf("ROTEAR PARA NO 9 -> %d\n", no_ref);
 				msg.mtype = TYPE_NO_1+8;
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
-			else
+			else if(type_escalonador)
 			{
-				printf("ROTEAR PARA ESC -> %d\n", no_ref);
+				// printf("ROTEAR PARA ESC -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_ESC;
 				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
-					// perror("Erro no envio da mensagem") ;
+					perror("Erro no envio da mensagem") ;
 				}
 			}
-
 			break;
 	}
 }
@@ -321,8 +413,9 @@ int is_folha(void)
 {
 	for (int i = 0; i < 8; ++i)
 	{
-		if(vetor_folhas[i] == no_ref)
-			return 1
+		if((no_ref == 4) || (no_ref == 5) || (no_ref == 7) || (no_ref == 8) || (no_ref == 14) || (no_ref == 15) ||
+			(no_ref == 12) || (no_ref == 11))
+			return 1;
 	}
 
 	return 0;
