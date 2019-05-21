@@ -31,7 +31,7 @@
 
 enum types_mensagens { TYPE_NO_1 = 1, TYPE_NO_2, TYPE_NO_3, TYPE_NO_4, TYPE_NO_5, TYPE_NO_6, TYPE_NO_7,
 TYPE_NO_8, TYPE_NO_9, TYPE_NO_10, TYPE_NO_11, TYPE_NO_12, TYPE_NO_13, TYPE_NO_14, TYPE_NO_15, TYPE_ESC, TYPE_ALL,
-TYPE_INI, TYPE_EXEC, TYPE_FIN, TYPE_STOP} types_msg;
+TYPE_INI, TYPE_EXEC, TYPE_FIN, TYPE_STOP, TYPE_SHUTDOWN} types_msg;
 
 
 typedef struct
@@ -73,6 +73,7 @@ int pid_principal;
 int inicializa_fattree(void);
 void aciona_execucao_prog(char *caminho_prog, char *programa);
 void exclui_fila_mensagem(void);
+void the_end(int sig);
 
 //funcoes auxiliares para comunicacao com a topologia FATTREE
 void cria_fila_mensagem(void);

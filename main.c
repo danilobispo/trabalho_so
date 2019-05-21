@@ -91,7 +91,8 @@ int inicializa_fattree(void)
 		}
 
 		//verificando se a topologia ja esta pronta para ser usada
-		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_ESC, 0) < 0) {
+		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_ESC, 0) < 0) 
+		{
 		   // perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
 			return 0;	
 		}
@@ -107,6 +108,8 @@ int inicializa_fattree(void)
 				return 0;
 			}
 		}
+
+		signal(SIGUSR1, the_end);
 	}
 	else
 	{
@@ -143,9 +146,26 @@ void aciona_execucao_prog(char *caminho_prog, char *programa)
 */
 void cria_fila_mensagem(void)
 {
+	mensagem msg;
     key_fila_msg = KEY;
+
 	if (( msgid = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
 	     perror("Erro de msgget") ;
+	}
+	else
+	{
+		//avisa ao processo shutdown o pid do escalonador
+		msg.mtype  = TYPE_SHUTDOWN;
+		msg.pid = pid_principal;
+		msg.no_source = pid_principal; /*TYPE_NO_eu*/
+		msg.no_dest = 0;
+		msg.operacao = 0;
+		(void) strcpy(msg.mtext,"pid escalonador") ;
+
+		if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+			perror("[ESCALONADOR]Erro no envio da mensagem") ;
+		}
+		////////
 	}
 
 }
@@ -307,4 +327,16 @@ int search_proc(int ref, int option)
 	}
 
 	return -1;
+}
+
+
+void the_end(int sig)
+{
+	printf("MATA TODO MUNDO!!\n");
+
+	//no final da execucao do escalonador
+	//a fila de msnagem deve ser excluida
+	//ATENCAO SOMENTE NO FINAL NAO ANTES
+	//SE NAO A TOPOLOGIA NAO FUNCIONARA MAIS
+	// exclui_fila_mensagem();
 }
