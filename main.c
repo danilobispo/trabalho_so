@@ -10,10 +10,14 @@ int main(int argc, char const *argv[])
 
 	int fattree_pronto = 0;
 
+	//SINAL NECESSARIO PARA O SHUTDOWN
+	signal(SIGUSR1, the_end);
+
+
+
 	/*
 	* ORDEM DAS FUNCOES PARA A TOPOLOGIA FATTREE 
 	*/
-
 	//funcao inicia a topologia e deixa-a pronta pra uso
 	fattree_pronto = inicializa_fattree();
 	
@@ -27,11 +31,8 @@ int main(int argc, char const *argv[])
 	}
 		
 
-	//no final da execucao do escalonador
-	//a fila de msnagem deve ser excluida
-	//ATENCAO SOMENTE NO FINAL NAO ANTES
-	//SE NAO A TOPOLOGIA NAO FUNCIONARA MAIS
-	exclui_fila_mensagem();
+
+	while(1);
 	
 	return 0;
 }
@@ -108,8 +109,6 @@ int inicializa_fattree(void)
 				return 0;
 			}
 		}
-
-		signal(SIGUSR1, the_end);
 	}
 	else
 	{
@@ -334,9 +333,16 @@ void the_end(int sig)
 {
 	printf("MATA TODO MUNDO!!\n");
 
+	for (int i = 0; i < N_NOS_FATTREE; ++i)
+	{
+		kill(tab_proc[i].pid, SIGKILL);
+	}
+
 	//no final da execucao do escalonador
 	//a fila de msnagem deve ser excluida
 	//ATENCAO SOMENTE NO FINAL NAO ANTES
 	//SE NAO A TOPOLOGIA NAO FUNCIONARA MAIS
-	// exclui_fila_mensagem();
+	exclui_fila_mensagem();
+
+	exit(1);
 }
