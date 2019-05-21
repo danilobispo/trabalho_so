@@ -1,7 +1,4 @@
 
-// #include <stdio.h> 
-// #include <stdlib.h>
-
 #include "fattree.h"
 #include "global.h"
 
@@ -11,18 +8,52 @@
 int main(int argc, char const *argv[])
 {
 
-	mensagem msg;
-	int contador_no_ref = 0;
 	int fattree_pronto = 0;
 
+	/*
+	* ORDEM DAS FUNCOES PARA A TOPOLOGIA FATTREE 
+	*/
+
+	//funcao inicia a topologia e deixa-a pronta pra uso
+	fattree_pronto = inicializa_fattree();
+	
+	//verifica se a topogia foi criada corretamente antes de mandar executar
+	if (fattree_pronto)
+	{
+		//funcao que manda executar um programa
+		//quando ela terminar todos os processos já terao executado e notificado o escalonador
+		//e este terá guardado todos os dados na tabela de processos
+		aciona_execucao_prog("./a.out", "a");
+	}
+		
+
+	//no final da execucao do escalonador
+	//a fila de msnagem deve ser excluida
+	//ATENCAO SOMENTE NO FINAL NAO ANTES
+	//SE NAO A TOPOLOGIA NAO FUNCIONARA MAIS
+	exclui_fila_mensagem();
+	
+	return 0;
+}
 
 
+
+/*
+* funcao que inicializa topologia
+* quando a topoliga estiver pronta para ser usada
+* retornará 1, caso contrarário 0
+*/
+int inicializa_fattree(void)
+{
+	mensagem msg;
+	int contador_no_ref = 0;
+
+
+	/*guarda o pid do escalonador*/
 	pid_principal = getpid();
 
-	printf("PAI ESC %d\n", pid_principal);
 
-
-
+	/*cria a fila de mensagem para comunicacao*/
 	cria_fila_mensagem();
 
 	/* 
@@ -31,10 +62,10 @@ int main(int argc, char const *argv[])
 	cria_fattree();
 
 
+
 	/* 
 	* o escalonador recebe os pids dos processos fat tree
 	* e armazena na tabela de processos
-	* no final eclui a fila de mensagens
 	*/
 	if (getpid() == pid_principal)
 	{
@@ -51,9 +82,8 @@ int main(int argc, char const *argv[])
 					tab_proc[contador_no_ref].no_ref = contador_no_ref+1;
 					tab_proc[contador_no_ref].livre = msg.livre;
 
+					/*notifica processo sobre sua referencia de nos (referencia vai de 1 a 15)*/
 					notifica_filho_ref(msg, contador_no_ref);
-
-					// printf("NO REF = %d | %d\n", tab_proc[contador_no_ref].no_ref, tab_proc[contador_no_ref].pid);
 
 					contador_no_ref++;	
 				}
@@ -63,39 +93,47 @@ int main(int argc, char const *argv[])
 		//verificando se a topologia ja esta pronta para ser usada
 		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_ESC, 0) < 0) {
 		   // perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
+			return 0;	
 		}
 		else
 		{
 			if (strcmp (msg.mtext, "topologia feita!") == 0)
 			{
-				fattree_pronto = 1;
+				// fattree_pronto = 1;
+				return 1;
 			}
-		}
-
-
-
-
-
-		if (fattree_pronto)
-		{
-			printf("VOU EXECUTAR\n");
-			if (is_todos_livres())
+			else
 			{
-				printf("EXECUTANDO...\n");
-				ordem_executa_programa();
-
-				espera_resultado_execucao();
+				return 0;
 			}
 		}
-		
-
-		while(1);
-		// exclui_fila_mensagem();
 	}
-	
-	while(1);
-	return 0;
+	else
+	{
+		return 0;
+	}
 }
+
+
+
+
+void aciona_execucao_prog(char *caminho_prog, char *programa)
+{
+	// printf("VOU EXECUTAR\n");
+	if (is_todos_livres())
+	{
+		// printf("EXECUTANDO...\n");
+		ordem_executa_programa(caminho_prog, programa);
+
+		espera_resultado_execucao();
+	}
+	else
+	{
+		printf("Não posso executar. Nem todos os processos estão livres!\n");
+	}
+}
+
+
 
 
 
@@ -149,8 +187,11 @@ void notifica_filho_ref(mensagem msg, int no_ref)
 }
 
 
-
-void ordem_executa_programa(void)
+/*
+* Essa funcao envia a mensagem com o nome do programa a ser executado
+* e marca os processos como ocupados
+*/
+void ordem_executa_programa(char *caminho_prog, char *programa)
 {
 	mensagem msg;
 
@@ -164,25 +205,12 @@ void ordem_executa_programa(void)
 	msg.no_dest = TYPE_ALL;
 	msg.livre = false;
 	msg.operacao = TYPE_EXEC;
-	(void) strcpy(msg.mtext,"a") ;
+	(void) strcpy(msg.mtext,caminho_prog) ;
+	(void) strcpy(msg.prog,programa) ;
 
 	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
 	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
 	}
-	// else
-	// {
-	// 	int index = search_proc_index(1);
-	// 	if (index == -1)
-	// 	{
-	// 		printf("[ESCALONADOR] NO NAO ENCONTRADO\n");
-	// 	}
-	// 	else
-	// 	{
-	// 		kill(tab_proc[index].pid, SIGUSR1);
-	// 		// kill(0, SIGUSR1);
-	// 		printf("[ESCALONADOR]MANDEI MENSAGEM %d | %d\n", tab_proc[index].no_ref, tab_proc[index].pid);
-	// 	}
-	// }
 
 
 	for (int i = 0; i < N_NOS_FATTREE; ++i)
@@ -192,6 +220,10 @@ void ordem_executa_programa(void)
 
 }
 
+/*
+* Essa funcao recebe a resposta dos processos
+* e guarda as informações na tabela de processos
+*/
 void espera_resultado_execucao(void)
 {
 	int contador_no_ref = 0;
@@ -211,26 +243,26 @@ void espera_resultado_execucao(void)
 
 				if (index != -1)
 				{
-					printf("[ESCALONADOR]PROCESSO %d finalizou\n", tab_proc[index].no_ref);
-					marca_gerente_livre(msg.pid);
+					// printf("[ESCALONADOR]PROCESSO %d finalizou | %lu -> %lu\n", tab_proc[index].no_ref, msg.time_ini, msg.time_end);
+					marca_gerente_livre(msg.pid, msg.time_ini, msg.time_end);
 
 					contador_no_ref++;
 				}
 			}
 		}
 	}
-
-	printf("------------>FINALIZE\n");
 }
 
 
-void marca_gerente_livre(int ref)
+void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end)
 {
 	for (int i = 0; i < N_NOS_FATTREE; ++i)
 	{
 		if (tab_proc[i].pid == ref)
 		{
 			tab_proc[i].livre = 1;
+			tab_proc[i].time_ini = time_ini;
+			tab_proc[i].time_end = time_end;
 		}
 	}
 }

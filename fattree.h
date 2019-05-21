@@ -33,8 +33,8 @@ typedef struct
 int pid;
 int no_ref;
 int msgid;
-// int folhas_vet[8] = {4, 5, 7, 8, 14, 15, 12, 11};
 nos nos_vetor[N_NOS];
+clock_t tempos[2];
 
 
 void cria_fattree(void);
@@ -42,10 +42,10 @@ void executa_programa(void);
 void roteamento_msg(mensagem);
 void registra_processo(void);
 void guarda_ref(void);
-void fim_programa(void);
+void fim_programa(unsigned long time_ini, unsigned long time_end);
 int is_folha(void);
 void comunica_no_raiz(void);
-void trata_mensagem(char *programa);
+void trata_mensagem(char *caminho_prog, char *programa);
 
 
 

@@ -15,12 +15,15 @@
 #include <string.h>
 
 
+#include <time.h>
+
+
 
 
 #define TAM_MSG 100
 //quantos bytes tem na struct da mensagem
-//100(vetor)+4(int)+1(bool)+4(int)+4(int)+4(int)
-#define TAM_TOTAL_MSG 117
+//100(vetor)+20(vetor)+4(int)+1(bool)+4(int)+4(int)+4(int)+8(lu)+8(lu)
+#define TAM_TOTAL_MSG 153
 #define KEY 123
 #define N_NOS_FATTREE 15
 
@@ -35,6 +38,8 @@ typedef struct
 {
 	int pid;
 	int no_ref;
+    unsigned long time_ini;
+    unsigned long time_end;
 	bool livre;
 }tabela_processos;
 
@@ -46,8 +51,11 @@ typedef struct
     int no_source;
     int no_dest;
     int operacao;
+    unsigned long time_ini;
+    unsigned long time_end;
     bool livre;
     char mtext[TAM_MSG];
+    char prog[20];
 }mensagem;
 
 
@@ -61,14 +69,23 @@ int pid_principal;
 
 
 
-void cria_fila_mensagem(void);
+//funcoes principais para comunicacao com a topologia FATTREE
+int inicializa_fattree(void);
+void aciona_execucao_prog(char *caminho_prog, char *programa);
 void exclui_fila_mensagem(void);
+
+//funcoes auxiliares para comunicacao com a topologia FATTREE
+void cria_fila_mensagem(void);
 void notifica_filho_ref(mensagem msg, int no_ref);
-void ordem_executa_programa(void);
+void ordem_executa_programa(char *caminho_prog, char *programa);
 void espera_resultado_execucao(void);
-void marca_gerente_livre(int ref);
+void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end);
 int is_todos_livres(void);
 int search_proc(int ref, int option);
+//-------------------------------
+
+
+
 
 
 #endif

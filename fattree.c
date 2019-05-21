@@ -11,7 +11,6 @@ void cria_fattree()
   	
 
   	pid_principal = getpid();
-  	printf("PAI GER %d\n", pid_principal);
 
 
    	/*criando os processos*/
@@ -37,8 +36,6 @@ void cria_fattree()
 
 		executa_programa();
 		//---------------------------------------------
-
-		while(1);
 	}
 }
 
@@ -142,7 +139,7 @@ void registra_processo(void)
 }
 
 
-void trata_mensagem(char *programa)
+void trata_mensagem(char *caminho_prog, char *programa)
 {
 	pid_t pid_exec;
 	int status;
@@ -152,7 +149,7 @@ void trata_mensagem(char *programa)
 	if (pid_exec == 0)
 	{
 		//filho
-      	execl("./a.out", programa, 0, 0);
+      	execl(caminho_prog, programa, 0, 0);
       	perror("execl() failure!\n\n");
 
 		exit(1);	
@@ -182,29 +179,30 @@ void executa_programa(void)
 
 		    	roteamento_msg(msg);
 
-		    	trata_mensagem(msg.mtext);
+		    	tempos[0] = clock();
+		    	trata_mensagem(msg.mtext, msg.prog);
+		    	tempos[1] = clock();
 
-				fim_programa();
-
-				// break;
+				fim_programa(tempos[0], tempos[1]);
 			}
 		}
 	}
-	// printf("------------>FINALIZE EXEC %d\n", no_ref);
 }
 
 
-void fim_programa(void)
+void fim_programa(unsigned long time_ini, unsigned long time_end)
 {
 	mensagem msg;
 	int contador_roteamento = 0;
 
-	msg.mtype  = no_ref; //coloca type_no_0 quando quer enviar para o escalonador
+	msg.mtype  = no_ref;
 	msg.pid = pid;
-	msg.no_source = no_ref; /*TYPE_NO_eu*/
+	msg.no_source = no_ref;
 	msg.no_dest = TYPE_ESC;
 	msg.livre = true;
 	msg.operacao = TYPE_FIN;
+	msg.time_ini = time_ini;
+	msg.time_end = time_end;
 	(void) strcpy(msg.mtext,"no terminou exec") ;
 	
 	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
