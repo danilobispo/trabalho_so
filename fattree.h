@@ -11,8 +11,7 @@
 
 #include "global.h"
 
-//2^n-1 = numeros de processos criados por n forks
-#define N_FORKS 4
+
 #define N_NOS 15
 
 
@@ -27,24 +26,23 @@ typedef struct
 
 
 
-// int cont_no = 0;
-
-
 int pid;
 int no_ref;
 int msgid;
 nos nos_vetor[N_NOS];
+
+time_t timer_inicio;
+time_t timer_final;
+struct tm *horarioLocal_inicio;
+struct tm *horarioLocal_final;
 clock_t tempos[2];
 
 
 void cria_fattree(void);
 void executa_programa(void);
 void roteamento_msg(mensagem);
-void registra_processo(void);
-void guarda_ref(void);
 void fim_programa(unsigned long time_ini, unsigned long time_end);
 int is_folha(void);
-void comunica_no_raiz(void);
 void trata_mensagem(char *caminho_prog, char *programa);
 
 

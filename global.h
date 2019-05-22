@@ -14,7 +14,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-
+// #include <iostream>
+// #include <ctime>
 #include <time.h>
 
 
@@ -61,7 +62,7 @@ typedef struct
 
 
 
-int key_fila_msg ;  /* ID da fila de mensagens */
+int key_fila_msg;
 tabela_processos tab_proc[15];
 int msgid;
 int pid_principal;
@@ -70,14 +71,13 @@ int pid_principal;
 
 
 //funcoes principais para comunicacao com a topologia FATTREE
-int inicializa_fattree(void);
+void inicializa_fattree(void);
 void aciona_execucao_prog(char *caminho_prog, char *programa);
 void exclui_fila_mensagem(void);
 void the_end(int sig);
 
 //funcoes auxiliares para comunicacao com a topologia FATTREE
 void cria_fila_mensagem(void);
-void notifica_filho_ref(mensagem msg, int no_ref);
 void ordem_executa_programa(char *caminho_prog, char *programa);
 void espera_resultado_execucao(void);
 void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end);

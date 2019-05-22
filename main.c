@@ -7,11 +7,9 @@
 
 int main(int argc, char const *argv[])
 {
-
-	int fattree_pronto = 0;
-
 	//SINAL NECESSARIO PARA O SHUTDOWN
 	signal(SIGUSR1, the_end);
+	////--------------
 
 
 
@@ -19,16 +17,13 @@ int main(int argc, char const *argv[])
 	* ORDEM DAS FUNCOES PARA A TOPOLOGIA FATTREE 
 	*/
 	//funcao inicia a topologia e deixa-a pronta pra uso
-	fattree_pronto = inicializa_fattree();
+	inicializa_fattree();
 	
-	//verifica se a topogia foi criada corretamente antes de mandar executar
-	if (fattree_pronto)
-	{
-		//funcao que manda executar um programa
-		//quando ela terminar todos os processos já terao executado e notificado o escalonador
-		//e este terá guardado todos os dados na tabela de processos
-		aciona_execucao_prog("./a.out", "a");
-	}
+
+	//funcao que manda executar um programa
+	//quando ela terminar todos os processos já terao executado e notificado o escalonador
+	//e este terá guardado todos os dados na tabela de processos
+	aciona_execucao_prog("./a.out", "a");
 		
 
 
@@ -44,7 +39,7 @@ int main(int argc, char const *argv[])
 * quando a topoliga estiver pronta para ser usada
 * retornará 1, caso contrarário 0
 */
-int inicializa_fattree(void)
+void inicializa_fattree(void)
 {
 	mensagem msg;
 	int contador_no_ref = 0;
@@ -62,58 +57,6 @@ int inicializa_fattree(void)
 	*/
 	cria_fattree();
 
-
-
-	/* 
-	* o escalonador recebe os pids dos processos fat tree
-	* e armazena na tabela de processos
-	*/
-	if (getpid() == pid_principal)
-	{
-		while(contador_no_ref < N_NOS_FATTREE)
-		{
-			if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_ESC, IPC_NOWAIT) < 0) {
-			   // perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
-			}
-			else
-			{
-				if (msg.operacao == TYPE_INI)
-				{
-					tab_proc[contador_no_ref].pid = msg.pid;
-					tab_proc[contador_no_ref].no_ref = contador_no_ref+1;
-					tab_proc[contador_no_ref].livre = msg.livre;
-
-					/*notifica processo sobre sua referencia de nos (referencia vai de 1 a 15)*/
-					notifica_filho_ref(msg, contador_no_ref);
-
-					contador_no_ref++;	
-				}
-			}
-		}
-
-		//verificando se a topologia ja esta pronta para ser usada
-		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_ESC, 0) < 0) 
-		{
-		   // perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
-			return 0;	
-		}
-		else
-		{
-			if (strcmp (msg.mtext, "topologia feita!") == 0)
-			{
-				// fattree_pronto = 1;
-				return 1;
-			}
-			else
-			{
-				return 0;
-			}
-		}
-	}
-	else
-	{
-		return 0;
-	}
 }
 
 
@@ -182,26 +125,6 @@ void exclui_fila_mensagem(void)
 	else
 	{
 		printf("EXCLUI LISTA DE MENSAGEM\n");
-	}
-}
-
-
-
-void notifica_filho_ref(mensagem msg, int no_ref)
-{
-    /*
-	* devolve ao processo a mensagem
-	* com sua respectiva referencia
-	*/
-	msg.mtype  = msg.pid;
-	// msg.pid = pid;
-	msg.no_source = pid_principal; /*TYPE_NO_eu*/
-	msg.no_dest = no_ref+1;
-	msg.operacao = TYPE_INI;
-	(void) strcpy(msg.mtext,"no ref") ;
-
-	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
-	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
 	}
 }
 

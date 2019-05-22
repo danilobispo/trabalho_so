@@ -8,135 +8,45 @@
 void cria_fattree()
 {
 	int cont_no = 0; 
+	int pid_fork;
+	int contador_no_ref = 0;
   	
 
   	pid_principal = getpid();
 
 
    	/*criando os processos*/
-	for (cont_no = 0; cont_no < N_FORKS; cont_no++)
+	for (cont_no = 0; cont_no < N_NOS; cont_no++)
 	{
-		fork();
+		if (getpid() == pid_principal)
+		{
+			no_ref = contador_no_ref+1;
+
+			pid_fork = fork();
+
+			if (pid_fork > 0)
+			{
+				tab_proc[contador_no_ref].pid = pid_fork;
+				tab_proc[contador_no_ref].no_ref = contador_no_ref+1;
+				tab_proc[contador_no_ref].livre = 1;
+
+				contador_no_ref++;
+			}
+		}
+		else
+		{
+			break;
+		}
+		
 	}
 
 
 	if (getpid() != pid_principal)
 	{
-		//---------------------------------------------
-		/*
-		* boloc de codigo que cria tudo que é necessario
-		* para a topologia funcionar
-		*/
-		registra_processo();
-
-		guarda_ref();
-		
-		comunica_no_raiz();
-
-
 		executa_programa();
-		//---------------------------------------------
 	}
 }
 
-
-
-void comunica_no_raiz(void)
-{
-	mensagem msg, msg_rcv;
-	int contador_nos = 0;
-
-	// if (no_ref != TYPE_NO_1)
-	// {
-	    /*
-		* enviado para o escalonador dados do processo
-		* notificando que já foi criado e está livre
-		*/
-		msg.mtype  = TYPE_NO_1;
-		msg.pid = pid;
-		msg.no_source = no_ref;
-		msg.no_dest = TYPE_NO_1;
-		msg.livre = true;
-		msg.operacao = 0;
-		(void) strcpy(msg.mtext,"comunica no 1") ;
-
-
-		if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
-		   perror("[CRIANDO]Erro no envio da mensagem");
-		}
-	// }
-	if (no_ref == TYPE_NO_1)
-	{
-		while(contador_nos < N_NOS)
-		{
-			if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_NO_1, IPC_NOWAIT) < 0)
-			{
-				// perror("[TRANSMITE]Erro na recepcao da mensagem");
-			}
-			else
-			{
-				if (msg.operacao == 0)
-				{
-					nos_vetor[contador_nos].no_ref = msg.no_source;
-					nos_vetor[contador_nos].pid = msg.pid;
-					// printf("[PROC 1]VETOR %d | %d\n", nos_vetor[contador_nos].no_ref, nos_vetor[contador_nos].pid);
-					contador_nos++;
-				}
-			}
-		}
-
-		//verificando se tudo o setup terminou
-		msg.mtype  = TYPE_ESC;
-		msg.pid = pid;
-		msg.no_source = no_ref;
-		msg.no_dest = TYPE_ESC;
-		msg.livre = true;
-		msg.operacao = 0;
-		(void) strcpy(msg.mtext,"topologia feita!") ;
-		if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
-		   perror("[CRIANDO]Erro no envio da mensagem");
-		}
-		//--------------------------------------
-	}
-}
-
-
-void guarda_ref(void)
-{
-	mensagem msg;
-
-	while(msgrcv(msgid, &msg, TAM_TOTAL_MSG, getpid(), IPC_NOWAIT) < 0)
-	{}
-
-	if (msg.operacao == TYPE_INI)
-	{
-		no_ref = msg.no_dest;
-	}
-}
-
-void registra_processo(void)
-{
-	mensagem msg;
-
-	pid = getpid();
-
-    /*
-	* enviado para o escalonador dados do processo
-	* notificando que já foi criado e está livre
-	*/
-	msg.mtype  = TYPE_ESC; //coloca type_no_0 quando quer enviar para o escalonador
-	msg.pid = pid;
-	msg.no_source = pid; /*TYPE_NO_eu*/
-	msg.no_dest = TYPE_ESC;
-	msg.operacao = TYPE_INI;
-	msg.livre = true;
-	(void) strcpy(msg.mtext,"no criado") ;
-
-
-	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
-	   perror("[CRIANDO]Erro no envio da mensagem") ;
-	}
-}
 
 
 void trata_mensagem(char *caminho_prog, char *programa)
