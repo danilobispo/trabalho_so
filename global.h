@@ -11,11 +11,11 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <sys/wait.h>
 #include <stdbool.h>
 #include <string.h>
 
-// #include <iostream>
-// #include <ctime>
+
 #include <time.h>
 
 

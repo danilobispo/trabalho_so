@@ -59,7 +59,8 @@ void trata_mensagem(char *caminho_prog, char *programa)
 	if (pid_exec == 0)
 	{
 		//filho
-      	execl(caminho_prog, programa, 0, 0);
+      	execl(caminho_prog, programa, NULL);
+	//execl("./a.out", "a", NULL);
       	perror("execl() failure!\n\n");
 
 		exit(1);	
