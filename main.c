@@ -1,8 +1,7 @@
 
 #include "fattree.h"
+#include "torus.h"
 #include "global.h"
-
-
 
 
 int main(int argc, char const *argv[])
@@ -268,4 +267,12 @@ void the_end(int sig)
 	exclui_fila_mensagem();
 
 	exit(1);
+}
+
+/**
+ * Realiza a inicializacao da topologia torus e de seus mecanismos de comunicacao caso seja a topologia selecionada
+ */
+
+void inicializaTorus(){
+// Não implementado aqui, apenas no torus.c, quando eu terminar a topologia trarei pra cá
 }

@@ -86,6 +86,9 @@ int search_proc(int ref, int option);
 //-------------------------------
 
 
+//funcoes principais para comunicacao com a topologia TORUS
+//TODO: Adequar o makefile para poder receber essa função e o torus.c/.h na criação da topologia
+void inicializaTorus();
 
 
 
