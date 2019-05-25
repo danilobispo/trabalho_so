@@ -184,6 +184,11 @@ void criaProcessosTorus(){
                 tab_proc[contador_no_ref].pid = pid_fork;
                 tab_proc[contador_no_ref].no_ref = contador_no_ref+1;
                 tab_proc[contador_no_ref].livre = 1;
+                // Adição idêntica a adição dos processos da fat tree, mas os meus são numerados de 0 a 15
+                // no NO_REF(NoID)
+                
+                
+                noTorus[i].pid = pid_fork;
 
                 contador_no_ref++;
             }
@@ -198,7 +203,8 @@ void criaProcessosTorus(){
     {
         for(i=0; i<n_nos_topologia; i++){
 //            DEBUG
-            printf("tabproc[%d]\npid: %d\nno_ref:%d\n", i, tab_proc[i].pid, tab_proc[i].no_ref);
+//            printf("tabproc[%d]\tpid: %d\tno_ref:%d\n", i, tab_proc[i].pid, tab_proc[i].no_ref);
+//            printf("NoTorus[%d]\tpid: %d\tnoId:%d\n", i, noTorus[i].pid, noTorus[i].noId);
         }
     }
 }
@@ -222,7 +228,7 @@ void inicializaTorus(){
     * funcao que cria os processos
     */
 //    TODO: Arrumar isso aqui pra funcionar direito
-//    criaProcessosTorus();
+    criaProcessosTorus();
 
 }
 
