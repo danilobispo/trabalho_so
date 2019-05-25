@@ -36,7 +36,7 @@ typedef struct {
     int pid;    // Pid do processo desse no
     int noId; // Numero do no, ou seja, a id do no que determinamos de 0 a 15
     int vizinhos[4]; // Numero maximo de vizinhos
-    int ocupado; // Verifica se o no ja esta executando algum processo
+    int livre; // Verifica se o no ja esta executando algum processo
     // 0 para falso, 1 para verdadeiro
 } NO_TORUS;
 

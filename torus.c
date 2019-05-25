@@ -48,28 +48,26 @@ void adicionarVizinho(int noAtual, int vizinho){
 }
 
 /**
-Informa vizinho que n? x ? vizinho, vizinho ent?o adiciona o dado n?, caso n?o seja duplicado
+Informa vizinho que no x eh vizinho, vizinho entao adiciona o dado no, caso nao seja duplicado
 **/
 void informarVizinho(int noAtual, int noIdVizinho){
-    //printf("Ei, no %d!\n%d eh seu vizinho!\n", noAtual, noIdVizinho);
-    //TODO: N? atual agora recebe na sua lista de vizinhos o n? vizinho
     if(!isVizinhoDuplicado(noAtual, noIdVizinho)){
         adicionarVizinho(noAtual, noIdVizinho);
     }
 }
 
 /**
-Imprime os n?s do torus, s? serve pra debug atualmente
+Imprime os nos do torus, so serve pra debug atualmente
 **/
 void imprimeNosTorus(){
     int i=0;
     int j=0;
-    char ocupado[4];
+    char livre[4];
 
     for(i; i < 16; i++){
         printf("No atual: %d\n", noTorus[i].noId);
-        noTorus[i].ocupado ? stpcpy(ocupado,"Sim") : strcpy(ocupado,"Nao");
-        printf("Ocupado? %s\n", ocupado);
+        noTorus[i].livre ? stpcpy(livre,"Sim") : strcpy(livre,"Nao");
+        printf("livre? %s\n", livre);
         for(j=0; j<4 ; j++){ //Imprime n?s vizinhos
             printf("Nos vizinhos: %d\n", noTorus[i].vizinhos[j]);
         }
@@ -77,7 +75,7 @@ void imprimeNosTorus(){
 }
 
 /**
-	Inicializa os n?s do torus
+	Inicializa os nos do torus
 	**/
 void criaNosTorus() {
     int i = 0;
@@ -92,7 +90,7 @@ void criaNosTorus() {
     // Visão abstrata dos processos, nenhum fork foi realizado por ora
     for (i; i < n_nos_topologia; i++){
         noTorus[i].noId = i;
-        noTorus[i].ocupado = 0; // A principio, todos os nos estao livres
+        noTorus[i].livre = 1; // A principio, todos os nos estao livres
         for(j=0; j<4; j++){
             noTorus[i].vizinhos[j] = -1; // Vizinho invalido, quando a insercao for realizada
             // esse valor sera necessario para checar se eu nao estou sobrescrevendo nada
