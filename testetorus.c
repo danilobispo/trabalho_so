@@ -12,7 +12,7 @@ int main(){
 	int n=4;
     
     enum types_mensagens { TYPE_NO_1 = 1, TYPE_NO_2, TYPE_NO_3, TYPE_NO_4, TYPE_NO_5, TYPE_NO_6, TYPE_NO_7,
-        TYPE_NO_8, TYPE_NO_9, TYPE_NO_10, TYPE_NO_11, TYPE_NO_12, TYPE_NO_13, TYPE_NO_14, TYPE_NO_15, TYPE_ESC, TYPE_ALL,
+        TYPE_NO_8, TYPE_NO_9, TYPE_NO_10, TYPE_NO_11, TYPE_NO_12, TYPE_NO_13, TYPE_NO_14, TYPE_NO_15, TYPE_NO_16, TYPE_ESC, TYPE_ALL,
         TYPE_INI, TYPE_EXEC, TYPE_FIN, TYPE_STOP, TYPE_SHUTDOWN} types_msg;
 	
 	// Pode vir a ser ?til, pois a fat tree tem 15 eu acho, tem que ser um par?metro passado quando
@@ -177,30 +177,34 @@ int main(){
             // ex 8 e 7 ou 7 e 8
             
             if (dist == 1 && !isVizinho(no_ref, destino) ) {
-                printf("Nao sao vizinhos\n");
+//                DEBUG
+//                printf("Nao sao vizinhos\n");
                 if ((destino - no_ref) > 0) {
                         printf(" > 0\n");
                         if (isVizinho(no_ref + 4, destino)) {
+//                            DEBUG
                             printf("Manda mensagem(origem: %d, destino:%d)\n", no_ref, no_ref + 4);
                             printf("Manda mensagem(origem: %d, destino:%d)\n", no_ref + 4, destino);
+                            return no_dest;
                         }
                 } else if ((destino - no_ref) < 0) {
                     printf(" < 0\n");
                     if (isVizinho(no_ref - 4, destino)) {
+//                        DEBUG
                         printf("Manda mensagem(origem: %d, destino:%d)\n", no_ref, no_ref - 4);
                         printf("Manda mensagem(origem: %d, destino:%d)\n", no_ref - 4, destino);
+                        return no_dest;
                     }
                 }
             }
-        
+//        DEBUG
             for (i = 0; i < 4; i++) {
-                printf("vizinhos: %d\n", no_torus[no_ref].vizinhos[i]);
+                printf("vizinhos: %d\t", no_torus[no_ref].vizinhos[i]);
             }
-            printf("destino: %d\n", destino);
             menorvalor = destino - no_torus[no_ref].vizinhos[0];
             // Calculo o modulo, que eh a distância absoluta entre os nos, independente de ser menor ou maior que 0
             menorvalor = abs(menorvalor);
-            printf("menorvalor: %d \n", menorvalor);
+            printf("\nmenorvalor: %d \n", menorvalor);
             melhorVizinho = no_torus[no_ref].vizinhos[0];
             for (i = 1; i < 4; i++) {
                 if (menorvalor > abs(destino - no_torus[no_ref].vizinhos[i])) {
@@ -216,6 +220,33 @@ int main(){
         return melhorVizinho+1;
 	    // Terceiro caso: quero mandar de volta para o escalonador
 	}
+    void testeCaminho() {
+        int no_ref, no_destino;
+        int valor;
+        int ans = 1;
+        
+        while(ans){
+            printf("Digite o no de origem: ");
+            scanf("%d", &no_ref);
+            printf("Digite o no destino: ");
+            scanf("%d", &no_destino);
+            
+            valor = no_ref+1;
+            int i = 0;
+            while(valor != no_destino+1) {
+                printf("\nIteracao %d\n", i);
+                valor = calculaCaminho(no_destino+1, valor);
+                if(valor != no_destino) {
+                    printf("proximo no: %d\n", valor - 1);
+                }
+                i++;
+            }
+            
+            printf("Quer fazer de novo?\n1.Sim\t0.Não: ");
+            scanf("%d", &ans);
+            
+        }
+    }
 	
 	
 	cria_nos_torus();
@@ -266,8 +297,10 @@ int main(){
 	}
 	//imprime_nos_torus();
 	
-	// Caso positivo: do nó 0 até o nó 9
-	int valor = TYPE_NO_1;
+	testeCaminho();
+    //  UM BANDO DE CASO DE TESTE
+//	// Caso positivo: do nó 0 até o nó 9
+//	int valor = TYPE_NO_1;
 //	i = 0;
 //
 //	while(valor != TYPE_NO_10){
@@ -277,8 +310,7 @@ int main(){
 //        printf("valor: %d\n", valor);
 //        i++;
 //    }
-
-	
+//
 //	 Caso negativo: do no 9 ate o no 0
 //	valor = TYPE_NO_10;
 //    i = 0;
@@ -288,30 +320,44 @@ int main(){
 //        printf("valor: %d\n", valor);
 //        i++;
 //    }
-    
-    valor = TYPE_NO_13;
-    i=0;
-    while(valor != TYPE_NO_8){
-        printf("\niteracao %d\n", i);
-        valor = calculaCaminho(TYPE_NO_8, valor);
-        printf("valor: %d\n", valor);
-        i++;
-        if(i == 4){
-            return 0;
-        }
-    }
-	
-	// Segundo caso positivo: 0 até o 10
+//
+//    // Aqui deu um caso especifico complicado, mas ja resolvi
+//    valor = TYPE_NO_13;
+//    i=0;
+//    while(valor != TYPE_NO_8){
+//        printf("\niteracao %d\n", i);
+//        valor = calculaCaminho(TYPE_NO_8, valor);
+//        printf("valor: %d\n", valor);
+//        i++;
+//    }
+//
+//	// Segundo caso positivo: 0 até o 10
 //    valor = TYPE_NO_3;
+//    i=0;
 //    while(valor != TYPE_NO_11){
+//        printf("\niteracao %d\n", i);
 //        valor = calculaCaminho(TYPE_NO_11, valor);
+//        printf("valor: %d\n", valor);
+//        i++;
 //    }
-	
-//	int valornegativo = TYPE_NO_12; // Nó 11
-//    while(valornegativo != TYPE_NO_5){
-//        valornegativo = calculaCaminho(TYPE_NO_5, valornegativo); // nó 4 é o atual, para no nó 8
+//
+//    valor = TYPE_NO_12;
+//    i=0;
+//    while(valor != TYPE_NO_5){
+//        printf("\niteracao %d\n", i);
+//        valor = calculaCaminho(TYPE_NO_5, valor);
+//        printf("valor: %d\n", valor);
+//        i++;
 //    }
-	   
-    
+//
+//    valor = TYPE_NO_1;
+//    i=0;
+//    while(valor != TYPE_NO_16){
+//        printf("\niteracao %d\n", i);
+//        valor = calculaCaminho(TYPE_NO_16, valor);
+//        printf("valor: %d\n", valor);
+//        i++;
+//    }
+////
 	return 0;
 }
