@@ -1,16 +1,31 @@
-#include "root.h"
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <signal.h>
+#include <sys/wait.h>
+
+//prototipo das funcoes
+void rootLoop (Process*);
+timedCommand* prepareCommand (char*);
+void printMenu (bool);
+void checkRun ();
+void executeCommand (List*);
+
+//prototipo do tratamento de sinais
+void executeScheduled (int);
 
 //listas de comandos declarada globalmente para poder ser acessada no tratamento da interrupcao
 List *scheduled = NULL;
 List *finished = NULL;
 
 //informacoes declaradas globalmente para estarem disponiveis no tratamento de interrupcoes
-Tree *rootInfo = NULL;
+Process *rootInfo = NULL;
 
 //variavel declarada globalmente para termos controles de quantos jobs foram realizados
 int count = 0;
 
-void rootLoop (Tree *info) {
+void rootLoop (Process *info) {
     rootInfo = info;
     //array para receber a entrada do usuario
     char in[256];
@@ -19,7 +34,7 @@ void rootLoop (Tree *info) {
     //deifne o tratamento das excecoes
     signal(SIGALRM, executeScheduled);
 
-    while (1) { 
+    while (1) {
         printMenu(false);
         scanf("%[^\n]s", in);
         getchar();
@@ -44,6 +59,13 @@ void rootLoop (Tree *info) {
                 }
 
                 //caso nao queira, a execucao continua abaixo
+
+                //checa se o usuario nao entrou com a forma correta
+                if (strstr(in, "executa_postergado") == NULL) {
+                    fprintf(stderr, "ERRO: formato desconhecido!\n");
+                    fprintf(stderr, "Formato: executa_postergado [delay] [arquivo]\n");
+                continue;
+                }
 
                 //tratamos a entrada
                 timedCommand *command = prepareCommand(in);
@@ -86,13 +108,11 @@ void rootLoop (Tree *info) {
         cout << "\nOs comandos executados foram:" << endl;
         finished = show(finished);
         //liberamos a memoria que estava alocada
-        _delete(finished);  
-        finished = NULL; 
+        _delete(finished);
+        finished = NULL;
     } else {
         cout << "\nNenhum comando foi executado.\n" << endl;
     }
-
-    //killKids();
 }
 
 //funcao que recupera as informacoes da string de entrada do usuario
@@ -115,7 +135,7 @@ timedCommand* prepareCommand (char* in) {
         if (in[i] == ' ') {
             //loop para ignorar multiplos espacos entrados pelo usuario
             while (++i < strlen(in) && in[i] == ' ');
-            
+
             //testa se nao esgotamos a string
             if (i < strlen(in)) {
                 ret->argc++;
@@ -145,7 +165,7 @@ timedCommand* prepareCommand (char* in) {
     do {
         //definimos o fim da palavra atual como o comeco
         int index2 = index1;
-        
+
         //encontramos o fim da palavra atual
         while (index2 < strlen(in)) {
             if (in[index2] == ' ' | in[index2] == '\n') {
@@ -182,7 +202,7 @@ timedCommand* prepareCommand (char* in) {
 
         //definimos o fim da palavra
         ret->argv[currentWord][i] = 0;
-        
+
         //andamos com o indice de inicio para a proxima palavra, ignorando os espacos
         while (++index1 < strlen(in) && in[index1] == ' ');
     } while (++currentWord < ret->argc);
@@ -198,7 +218,7 @@ int getDelay (char* in, timedCommand* command) {
     //faz uma copia da string de entrada
     char num[strlen(in)];
     strcpy(num, in);
-    
+
     //variavel que sera utilizada para achar o fim da primeira palavra
     int i = 0;
 
@@ -264,13 +284,11 @@ void executeCommand (List *command) {
     printf("job=%d,arquivo=%s,delay=%d segundos\n\n", command->element->jobNumber, substring, command->element->delay);
     //checa se ainde deve esperar para a execucao
     int diff = command->element->startTime - time(NULL);
-    
+
     //se precisamos esperar, bloqueamos pelo tempo adequado
     if (diff > 0) {
         sleep(diff);
     }
-
-    //sendMessage(command->element);
 
     //guardamos o tempo real de inicio
     command->element->startTime = time(NULL);
@@ -304,28 +322,98 @@ void checkRun () {
     }
 }
 
-//funcao para mandar mensagens aos filhos
-void sendMessage (timedCommand *command) {
-    Message msg;
-    msg.info = (char*) command->argv;
+//funcao que recupera as informacoes da string de entrada do usuario
+//retorna o endereco da nova estrutura que foi criada com as informacoes
+timedCommand* prepareCommand (char* in) {
+    //cria um novo espaco para armazenar as informacoes novas
+    timedCommand *ret = (timedCommand*) malloc(sizeof(timedCommand));
+    //guarda a hora em que este comando foi criado
+    ret->arrivalTime = time(NULL);
+    //seta valores default logo apos a criacao
+    ret->argv = NULL;
+    ret->startTime = -1;
+    ret->argc = 0;
+    ret->finishedTime = -1;
+    ret->runTime = 0;
 
-    //manda a mensagem para o filho da esquerda
-    msg.pid = rootInfo->leftChild;
-    msgsnd(rootInfo->leftQueue, &msg, sizeof(msg), 0);
+    //loop para contar quantas palavras estao presentes na entrada
+    for (int i=0; i < strlen(in); i++) {
+        //se temos um espaco, outra palavra deve comecar
+        if (in[i] == ' ') {
+            //loop para ignorar multiplos espacos entrados pelo usuario
+            while (++i < strlen(in) && in[i] == ' ');
 
-    //manda a mensagem para o filho da direita
-    msg.pid = rootInfo->rightChild;
-    msgsnd(rootInfo->rightQueue, &msg, sizeof(msg), 0);
-}
+            //testa se nao esgotamos a string
+            if (i < strlen(in)) {
+                ret->argc++;
+            }
+        }
+    }
 
-//funcao para mandar a mensagem de fim aos filhos
-void killKids () {
-    timedCommand *quit = (timedCommand*) sizeof(timedCommand);
-    //mensagem especial que informa o termino da execucao
-    quit->argv = NULL;
-    sendMessage(quit);
-    //espera os filhos terminarem
-    int ret;
-    waitpid(rootInfo->leftChild, &ret, 0);
-    waitpid(rootInfo->rightChild, &ret, 0);
+    //se nao temos pelo menos uma palavra de comando (ignorando o delay)
+    //dizemos ao usuario que a entrada esta incorreta e encerramos a execucao
+    if (ret->argc < 1) {
+        cerr << "\nERRO: deve ser passado um tempo e um arquivo!" << endl;
+        cerr << "Formato: <seg> <arq_executavel>\n" << endl;
+        exit(1);
+    }
+
+    //alocamos o espaco necessario para armazenar os comandos
+    ret->argv = (char**) malloc(sizeof(char*) * ret->argc+1);
+    //definimos o ultimo comando como NULL, para saber onde esta o fim
+    ret->argv[ret->argc] = NULL;
+    //define qual o numero desse job
+    ret->jobNumber = ++count;
+
+    //loop para separar as palavras da entrada em um array de strings
+    int currentWord = 0;
+    //pegamos o indice de onde comeca os comandos
+    int index1 = getDelay(in, ret);
+    do {
+        //definimos o fim da palavra atual como o comeco
+        int index2 = index1;
+
+        //encontramos o fim da palavra atual
+        while (index2 < strlen(in)) {
+            if (in[index2] == ' ' | in[index2] == '\n') {
+                break;
+            }
+            index2++;
+        }
+
+        //alocamos o espaco necessario para a palavra atual
+        ret->argv[currentWord] = (char*) malloc(sizeof(char) * index2-index1+1);
+
+        //fazemos a copia, char a char
+        int i = 0;
+
+        //verifica se na primeira palavra tem o "./" necessario para execucao
+        if (currentWord == 0) {
+            if (in[index1] != '.' || in[index1+1] != '/') {
+                //alocamos o espaco necessario para a palavra atual
+                ret->argv[currentWord] = (char*) malloc(sizeof(char) * index2-index1+3);
+                ret->argv[currentWord][i++] = '.';
+                ret->argv[currentWord][i++] = '/';
+            } else {
+                //alocamos o espaco necessario para a palavra atual
+                ret->argv[currentWord] = (char*) malloc(sizeof(char) * index2-index1+1);
+            }
+        } else {
+            //alocamos o espaco necessario para a palavra atual
+            ret->argv[currentWord] = (char*) malloc(sizeof(char) * index2-index1+1);
+        }
+
+        for (; index1 < index2; index1++, i++) {
+            ret->argv[currentWord][i] = in[index1];
+        }
+
+        //definimos o fim da palavra
+        ret->argv[currentWord][i] = 0;
+
+        //andamos com o indice de inicio para a proxima palavra, ignorando os espacos
+        while (++index1 < strlen(in) && in[index1] == ' ');
+    } while (++currentWord < ret->argc);
+
+    //retornamos a nova estrutura criada
+    return ret;
 }
