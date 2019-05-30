@@ -34,7 +34,7 @@ int main(){
 	/**
 	Inicializa os n?s do torus
 	**/
-	void cria_nos_torus(){
+	void cria_nos_torus() {
 		for (i;i<16;i++){
 			no_torus[i].no_id = i;
 			no_torus[i].ocupado = 0; // A princ?pio, todos os n?s est?o livres
@@ -170,7 +170,7 @@ int main(){
             // TODO: Fazer o caso de nó voltando para o nó 0 e para o escalonador
         
             int dist = abs(destino - no_ref);
-            printf("dist: %d\n", dist);
+//            printf("dist: %d\n", dist);
         
         
             // Caso especifico: distancia entre os nos eh 1, mas o no nao eh vizinho do outro
@@ -199,21 +199,21 @@ int main(){
             }
 //        DEBUG
             for (i = 0; i < 4; i++) {
-                printf("vizinhos: %d\t", no_torus[no_ref].vizinhos[i]);
+//                printf("vizinhos: %d\t", no_torus[no_ref].vizinhos[i]);
             }
             menorvalor = destino - no_torus[no_ref].vizinhos[0];
             // Calculo o modulo, que eh a distância absoluta entre os nos, independente de ser menor ou maior que 0
             menorvalor = abs(menorvalor);
-            printf("\nmenorvalor: %d \n", menorvalor);
+//            printf("\nmenorvalor: %d \n", menorvalor);
             melhorVizinho = no_torus[no_ref].vizinhos[0];
             for (i = 1; i < 4; i++) {
                 if (menorvalor > abs(destino - no_torus[no_ref].vizinhos[i])) {
                     menorvalor = abs(destino - no_torus[no_ref].vizinhos[i]);
-                    printf("menorvalor: %d \n", menorvalor);
+//                    printf("menorvalor: %d \n", menorvalor);
                     melhorVizinho = no_torus[no_ref].vizinhos[i];
                 }
             }
-            printf("Melhor Vizinho: %d\n", melhorVizinho);
+//            printf("Melhor Vizinho: %d\n", melhorVizinho);
             printf("Manda mensagem(origem: %d, destino:%d)", no_ref, melhorVizinho);
         }
         
@@ -233,13 +233,16 @@ int main(){
             
             valor = no_ref+1;
             int i = 0;
-            while(valor != no_destino+1) {
+            while(valor != no_destino + 1) {
                 printf("\nIteracao %d\n", i);
-                valor = calculaCaminho(no_destino+1, valor);
+                valor = calculaCaminho(no_destino + 1, valor);
                 if(valor != no_destino) {
                     printf("proximo no: %d\n", valor - 1);
                 }
                 i++;
+                if(i == 10){
+                    break;
+                }
             }
             
             printf("Quer fazer de novo?\n1.Sim\t0.Não: ");
@@ -247,6 +250,152 @@ int main(){
             
         }
     }
+    
+    int calculaCaminhoFile(int no_dest, int tipo_msg, FILE* file){
+        int type_all = no_dest == TYPE_ALL ? 1:0;
+        int type_escalonador  = no_dest == TYPE_ESC ? 1:0;
+        // Valores absolutos para no de origem e no destino
+        int destino = no_dest - 1; // Valores absolutos
+        int no_ref = tipo_msg - 1; // Valores absolutos
+        
+        printf("Destino: %d\nno_ref:%d\n", destino, no_ref);
+        
+        int i;
+        unsigned int menorvalor;
+        int melhorVizinho;
+        
+        // Primeiro caso: Quero mandar para todos
+        
+        // 0 manda para 1, 4
+        //msgsnd()
+        //msgsnd()
+        // 1 manda para 2, 5
+        //msgsnd()
+        //msgsnd()
+        // 2 manda para 3, 6
+        //msgsnd()
+        //msgsnd()
+        // 3 manda para 7
+        //msgsnd()
+        // 4 manda para 8
+        //msgsnd()
+        // 5 manda para 9
+        //msgsnd()
+        // 6 manda para 10
+        //msgsnd()
+        // 7 manda para 11
+        //msgsnd()
+        // 8 manda para 12
+        //msgsnd()
+        // 9 manda para 13
+        //msgsnd()
+        // 10 manda para 14
+        //msgsnd()
+        // 11 manda para 15
+        //msgsnd()
+        
+        // Segundo caso, calcula nó específico:
+        if(!type_all && !type_escalonador) {
+            
+            // Distância é nó de destino - o nó de origem
+            // Se o nó destino for o escalonador, isso será negativo...
+            // TODO: Fazer o caso de nó voltando para o nó 0 e para o escalonador
+            
+            int dist = abs(destino - no_ref);
+//            printf("dist: %d\n", dist);
+            
+            
+            // Caso especifico: distancia entre os nos eh 1, mas o no nao eh vizinho do outro
+            // ex 8 e 7 ou 7 e 8
+            
+            if (dist == 1 && !isVizinho(no_ref, destino) ) {
+//                DEBUG
+//                printf("Nao sao vizinhos\n");
+                if ((destino - no_ref) > 0) {
+                    printf(" > 0\n");
+                    if (isVizinho(no_ref + 4, destino)) {
+//                            DEBUG
+                        printf("Manda mensagem(origem: %d, destino:%d)\n", no_ref, no_ref + 4);
+                        printf("Manda mensagem(origem: %d, destino:%d)\n", no_ref + 4, destino);
+                        fprintf(file, "Manda mensagem(origem: %d, destino:%d)\n", no_ref, no_ref + 4);
+                        fprintf(file, "Manda mensagem(origem: %d, destino:%d)\n", no_ref + 4, destino);
+                        return no_dest;
+                    }
+                } else if ((destino - no_ref) < 0) {
+                    printf(" < 0\n");
+                    if (isVizinho(no_ref - 4, destino)) {
+//                        DEBUG
+                        printf("Manda mensagem(origem: %d, destino:%d)\n", no_ref, no_ref - 4);
+                        printf("Manda mensagem(origem: %d, destino:%d)\n", no_ref - 4, destino);
+                        fprintf(file, "Manda mensagem(origem: %d, destino:%d)\n", no_ref, no_ref - 4);
+                        fprintf(file, "Manda mensagem(origem: %d, destino:%d)\n", no_ref - 4, destino);
+                        return no_dest;
+                    }
+                }
+            }
+//        DEBUG
+            for (i = 0; i < 4; i++) {
+//                printf("vizinhos: %d\t", no_torus[no_ref].vizinhos[i]);
+            }
+            menorvalor = destino - no_torus[no_ref].vizinhos[0];
+            // Calculo o modulo, que eh a distância absoluta entre os nos, independente de ser menor ou maior que 0
+            menorvalor = abs(menorvalor);
+//            printf("\nmenorvalor: %d \n", menorvalor);
+            melhorVizinho = no_torus[no_ref].vizinhos[0];
+            for (i = 1; i < 4; i++) {
+                if (menorvalor > abs(destino - no_torus[no_ref].vizinhos[i])) {
+                    menorvalor = abs(destino - no_torus[no_ref].vizinhos[i]);
+//                    printf("menorvalor: %d \n", menorvalor);
+                    melhorVizinho = no_torus[no_ref].vizinhos[i];
+                }
+            }
+//            printf("Melhor Vizinho: %d\n", melhorVizinho);
+            printf("Manda mensagem(origem: %d, destino:%d)\n", no_ref, melhorVizinho);
+            fprintf(file, "Manda mensagem(origem: %d, destino:%d)\n", no_ref, melhorVizinho);
+        }
+        return melhorVizinho+1;
+        // Terceiro caso: quero mandar de volta para o escalonador
+    }
+    
+    void loopMaluco(){
+	    FILE* loop;
+	    loop = fopen("loopMaluco.txt", "w");
+        int valor;
+        n = 16;
+        int i = 0;
+        for(i = 0; i < n; i++){
+            for(j = 0; j < n; j++){
+                printf("i:%d\nj:%d\n", i, j);
+                fprintf(loop, "i:%d\nj:%d\n", i, j);
+                valor = i+1;
+                while(valor != j+1){
+                    valor = calculaCaminhoFile(j+1 , valor, loop);
+                    if(valor != j+1) {
+                        printf("proximo no: %d\n", valor - 1);
+                        fprintf(loop, "proximo no: %d\n", valor - 1);
+                    }
+                }
+            }
+        }
+        
+        fprintf(loop, "\n\n INVERSO \n\n");
+    
+        for(i = n-1; i > 0; i--){
+            for(j = n-1; j > 0; j--){
+                printf("i:%d\nj:%d\n", i, j);
+                fprintf(loop, "i:%d\nj:%d\n", i, j);
+                valor = i+1;
+                while(valor != j+1){
+                    valor = calculaCaminhoFile(j+1 , valor, loop);
+                    if(valor != j+1) {
+                        printf("proximo no: %d\n", valor - 1);
+                        fprintf(loop, "proximo no: %d\n", valor - 1);
+                    }
+                }
+            }
+        }
+        fclose(loop);
+	}
 	
 	
 	cria_nos_torus();
@@ -297,6 +446,7 @@ int main(){
 	}
 	//imprime_nos_torus();
 	
+	// loopMaluco();
 	testeCaminho();
     //  UM BANDO DE CASO DE TESTE
 //	// Caso positivo: do nó 0 até o nó 9
