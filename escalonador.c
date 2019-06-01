@@ -36,7 +36,7 @@ int main(int argc, char const *argv[])
 void cria_fila_mensagem_postergado(void)
 {
 	msg_postergado msg;
-    key_fila_msg = 123;
+    key_fila_msg = KEY_ESC_POSTERGADO;
 
 	if (( msgid = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
 	     perror("Erro de msgget") ;

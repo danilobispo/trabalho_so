@@ -10,10 +10,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define TAM_MSG 100
-//quantos bytes tem na struct da mensagem
-//100(vetor)+20(vetor)+4(int)+1(bool)+4(int)+4(int)+4(int)+8(lu)+8(lu)
-#define TAM_TOTAL_MSG 153
+
+#define KEY_ESC_POSTERGADO 12496
 
 
 int main(int argc, char const *argv[])
@@ -28,7 +26,7 @@ int main(int argc, char const *argv[])
 
 
     	/*  recuperacao do id da fila de mensagens do servidor       */
-	if ((msgid = msgget(123,0)) == -1) {
+	if ((msgid = msgget(KEY_ESC_POSTERGADO,0)) == -1) {
 	      perror("Erro na criacao da fila do servidor") ;
 	      // exit(1) ;
 	}
@@ -48,7 +46,6 @@ int main(int argc, char const *argv[])
 	       perror("Erro de msgget") ;
 	    }
 
-      // //kill (msg0.pid, SIGUSR1);
       break;
     }
   }
