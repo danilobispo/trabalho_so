@@ -19,8 +19,6 @@
 #include <time.h>
 
 
-
-
 #define TAM_MSG 100
 //quantos bytes tem na struct da mensagem
 //100(vetor)+20(vetor)+4(int)+1(bool)+4(int)+4(int)+4(int)+8(lu)+8(lu)
@@ -31,8 +29,8 @@
 
 
 enum types_mensagens { TYPE_NO_1 = 1, TYPE_NO_2, TYPE_NO_3, TYPE_NO_4, TYPE_NO_5, TYPE_NO_6, TYPE_NO_7,
-TYPE_NO_8, TYPE_NO_9, TYPE_NO_10, TYPE_NO_11, TYPE_NO_12, TYPE_NO_13, TYPE_NO_14, TYPE_NO_15, TYPE_ESC, TYPE_ALL,
-TYPE_INI, TYPE_EXEC, TYPE_FIN, TYPE_STOP, TYPE_SHUTDOWN} types_msg;
+TYPE_NO_8, TYPE_NO_9, TYPE_NO_10, TYPE_NO_11, TYPE_NO_12, TYPE_NO_13, TYPE_NO_14, TYPE_NO_15, TYPE_NO_16, TYPE_ESC, TYPE_ALL,
+TYPE_INI, TYPE_EXEC, TYPE_FIN, TYPE_STOP, TYPE_SHUTDOWN, TYPE_ESC_EXEC, TYPE_ESC_JOBS} types_msg;
 
 
 typedef struct
@@ -44,6 +42,16 @@ typedef struct
 	bool livre;
 }tabela_processos;
 
+typedef struct
+{
+	int jobs;
+	char nome_programa[100];
+    int tempo_delay;
+	time_t tempo_futuro;
+    time_t inicio;
+    bool executado;
+    int makespan;
+}tabela_job_processos;
 
 typedef struct
 {
@@ -60,21 +68,34 @@ typedef struct
 }mensagem;
 
 
+typedef struct
+{
+    long mtype;
+    int pid;
+    int job;
+    int tempo_delay;
+    char nome_programa[100];
+}msg_postergado;
 
 
 int key_fila_msg;
-tabela_processos tab_proc[15];
+tabela_processos tab_proc[16];
 int msgid;
 int pid_principal;
+tabela_job_processos tab_job[100];
 
+//varáveis globais
 
-
+int cont_job = 0, menor_job = 0, menor_delay = 10000;
 
 //funcoes principais para comunicacao com a topologia FATTREE
 void inicializa_fattree(void);
 void aciona_execucao_prog(char *caminho_prog, char *programa);
 void exclui_fila_mensagem(void);
 void the_end(int sig);
+
+//função auxiliares para comunicação com o executa postergado
+void cria_fila_mensagem_postergado(void);
 
 //funcoes auxiliares para comunicacao com a topologia FATTREE
 void cria_fila_mensagem(void);
