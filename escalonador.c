@@ -25,7 +25,16 @@ int main(int argc, char const *argv[])
 	}
 	//---------------------------
 	
+	//------------SHUTDOWN----------------
+		
+		//SINAL NECESSARIO PARA O SHUTDOWN
+		signal(SIGUSR1, the_end);
+
+		cria_fila_shutdown();
 	
+	//------------------------------------
+
+
 	//------------INICIO ESCALONADOR--------
 
 	inicia_tab_jobs();
@@ -61,10 +70,38 @@ int main(int argc, char const *argv[])
 
 
 /*
+* criacao de uma fila para o shutdown
+*/
+void cria_fila_shutdown(void)
+{
+	mensagem msg;
+    key_fila_msg = KEY_ESC_SHUT;
+
+	if (( msgid_shutdown = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
+	     perror("Erro de msgget") ;
+	}
+	else
+	{
+		//avisa ao processo shutdown o pid do escalonador
+		msg.mtype  = TYPE_SHUTDOWN;
+		msg.pid = pid_principal;
+		msg.no_source = pid_principal; /*TYPE_NO_eu*/
+		msg.no_dest = 0;
+		msg.operacao = 0;
+		(void) strcpy(msg.mtext,"pid escalonador") ;
+
+		if (msgsnd(msgid_shutdown, &msg, TAM_TOTAL_MSG, 0) < 0) {
+			perror("[ESCALONADOR]Erro no envio da mensagem") ;
+		}
+		////////
+	}
+
+}
+
+/*
 * criacao de uma fila de mensagens para leitura se
 * ela ainda nao existe
 */
-
 void cria_fila_mensagem_postergado(void)
 {
 	msg_postergado msg;
@@ -289,22 +326,6 @@ void cria_fila_mensagem(void)
 	if (( msgid_fila_topologia = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
 	     perror("Erro de msgget") ;
 	}
-	else
-	{
-		//avisa ao processo shutdown o pid do escalonador
-		msg.mtype  = TYPE_SHUTDOWN;
-		msg.pid = pid_principal;
-		msg.no_source = pid_principal; /*TYPE_NO_eu*/
-		msg.no_dest = 0;
-		msg.operacao = 0;
-		(void) strcpy(msg.mtext,"pid escalonador") ;
-
-		if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
-			perror("[ESCALONADOR]Erro no envio da mensagem") ;
-		}
-		////////
-	}
-
 }
 
 /*
@@ -484,5 +505,59 @@ void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end
 				tab_proc[i].livre = 1;
 			}
 		}
+	}
+}
+
+
+
+void the_end(int sig)
+{
+	printf("MATA TODO MUNDO!!\n");
+
+	if (topologia == 'F')
+	{
+		for (int i = 0; i < N_NOS_FATTREE; ++i)
+		{
+			kill(tab_proc[i].pid, SIGKILL);
+		}
+
+		exclui_fila_mensagem(msgid_fila_topologia);
+	}
+	else if	(topologia != 'H')
+	{
+		for (int i = 0; i < N_NOS_CUBO_TORUS; ++i)
+		{
+			kill(tab_proc[i].pid, SIGKILL);
+		}
+
+		exclui_fila_mensagem(msgid_fila_topologia);
+	}
+	
+
+	//no final da execucao do escalonador
+	//a fila de msnagem deve ser excluida
+	//ATENCAO SOMENTE NO FINAL NAO ANTES
+	//SE NAO A TOPOLOGIA NAO FUNCIONARA MAIS
+	exclui_fila_mensagem(msgid_shutdown);
+
+	exclui_fila_mensagem(msgid_postergado);
+
+	exit(1);
+}
+
+
+
+/*
+* exclui a fila de mensagem
+*/
+void exclui_fila_mensagem(int id_da_fila)
+{
+	if( msgctl(id_da_fila, IPC_RMID, 0) < 0)
+	{
+		perror("[ESCALONADOR]Erro na exclusao da fila");
+	}
+	else
+	{
+		printf("EXCLUI LISTA DE MENSAGEM\n");
 	}
 }

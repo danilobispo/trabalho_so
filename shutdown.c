@@ -10,7 +10,7 @@
 #include <string.h>
 
 
-#define KEY 123
+#define KEY_ESC_SHUT 12497
 #define TAM_MSG 100
 //quantos bytes tem na struct da mensagem
 //100(vetor)+20(vetor)+4(int)+1(bool)+4(int)+4(int)+4(int)+8(lu)+8(lu)
@@ -39,18 +39,17 @@ int main(int argc, char const *argv[])
 	mensagem msg;
 
   	/*  recuperacao do id da fila de mensagens do servidor       */
-	if ((msgid = msgget(KEY,0)) == -1) {
+	if ((msgid = msgget(KEY_ESC_SHUT,0)) == -1) {
 	      perror("Erro na criacao da fila do servidor") ;
 	      // exit(1) ;
 	}
 	else
 	{
-		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, 22, IPC_NOWAIT) < 0) {
+		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, 23, IPC_NOWAIT) < 0) {
 		   // perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
 		}
 		else
 		{
-			printf("PID ESC %d\n", msg.pid);
 			kill(msg.pid, SIGUSR1); 
 		}
 	}

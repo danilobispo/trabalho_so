@@ -5,9 +5,11 @@
 
 
 #define KEY_ESC_POSTERGADO 12496
+#define KEY_ESC_SHUT 12497
 
 char topologia;
 int msgid_postergado;
+int msgid_shutdown;
 int msgid_fila_topologia;
 int programa_executado = 0;
 
@@ -32,6 +34,9 @@ int search_proc(int ref, int option);
 void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end, int n_nos);
 int is_todos_livres(int n_nos);
 void infos_fila_msg(void);
+void cria_fila_shutdown(void);
+void the_end(int sig);
+void exclui_fila_mensagem(int id_da_fila);
 
 
 #endif
