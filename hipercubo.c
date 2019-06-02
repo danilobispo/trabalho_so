@@ -10,9 +10,16 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h> 
-#include "global.h"
+//#include "global.h"
 #define N 15
-struct tabela_processos
+#define TAM_MSG 100
+
+enum types_mensagens { TYPE_NO_1 = 1, TYPE_NO_2, TYPE_NO_3, TYPE_NO_4, TYPE_NO_5, TYPE_NO_6, TYPE_NO_7,
+TYPE_NO_8, TYPE_NO_9, TYPE_NO_10, TYPE_NO_11, TYPE_NO_12, TYPE_NO_13, TYPE_NO_14, TYPE_NO_15, TYPE_NO_16, TYPE_ESC, TYPE_ALL,
+TYPE_INI, TYPE_EXEC, TYPE_FIN, TYPE_STOP, TYPE_SHUTDOWN, TYPE_ESC_EXEC, TYPE_ESC_JOBS} types_msg;
+
+
+ struct tb
 {
 	int pid;
 	int no_ref;
@@ -21,7 +28,8 @@ struct tabela_processos
 	bool livre;
 }typedef tabela_processos;
 
-struct mensagem
+
+ struct mm
 {
     long mtype;
     int pid;
@@ -37,13 +45,13 @@ struct mensagem
 
 
 
-void cria_familia_hipercubo(struct tabela_processos *,struct tabela_processos *, int , struct mensagem *, int *);
+void cria_familia_hipercubo(tabela_processos *,  tabela_processos *, int ,  mensagem *, int *);
 
-void envia_mensagem_hipercubo(struct tabela_processos *, struct mensagem *, int, int *);
+void envia_mensagem_hipercubo( tabela_processos *,  mensagem *, int, int *);
 
-void recebe_mensagem_hipercubo(struct tabela_processos *, struct mensagem *, int, int *);
+void recebe_mensagem_hipercubo( tabela_processos *,  mensagem *, int, int *);
 
-void envia_reverso_mensagem_hipercubo(struct tabela_processos *, struct mensagem *, struct mensagem *, int , struct mensagem *);
+void envia_reverso_mensagem_hipercubo( tabela_processos *,  mensagem *,  mensagem *, int ,  mensagem *);
 
 int main(){
   	pid_t pid; 
@@ -57,10 +65,10 @@ int main(){
 	char executavel[TAM_MSG+20];
 	time_t timer;
 	//struct filho filhos[N];
-	struct tabela_processos proprio;
-	struct tabela_processos filhos[N+1];
-	struct mensagem mensagem_env, mensagem_rec;
-	struct mensagem tabela[N+1];
+	tabela_processos proprio;
+	tabela_processos filhos[N+1];
+	mensagem mensagem_env, mensagem_rec;
+	mensagem tabela[N+1];
 	
 	//começa pelo pai, então é 0. Os demais terão que atualizar esse valor.
 	proprio.no_ref = 0;
@@ -82,30 +90,33 @@ int main(){
      		exit(1);
    	}
 
-
-  	/* if (( pid = fork()) < 0)
-   	{
-     		printf("erro no fork\n");
-     		_exit(1);
-  	 }*/
-
-	//nome do programa em msg.prog, path no mtext, mtype envia 1, mtype retorna TYPE_ESC, 100012313
+	printf("\nCHEGUEI HIPERCUBO\n");
+	fflush(stdout);
 
 	while(1){
-		if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 1, IPC_NOWAIT)<0){
-			//perror("Erro no no 1");
-		}else{
-			break;}
-		}
 
-	mensagem_env.prog = mensagem_rec.prog;
-	mensagem_env.mtext = mensagem_rec.mtext;
+		printf("[HIPER]ACABEI DE CHEGAR NO WHILE\n");
+		fflush(stdout);
+
+		if(msgrcv(idfila_esc, &mensagem_rec, sizeof(mensagem_rec), 1, IPC_NOWAIT)<0){
+			printf("\nErro no no 1");
+			fflush(stdout);
+		}else{
+			printf("\n[HIPER]RECEBI MENSAGEM EXECUTAR\n");
+			fflush(stdout);
+
+			break;
+		}
+	}
+
+	strcpy(mensagem_env.prog, mensagem_rec.prog);
+	strcpy(mensagem_env.mtext, mensagem_rec.mtext);
 
 	cria_familia_hipercubo(filhos, &proprio, idfila, &mensagem_env,  &pid_pai);
 	
   		/*strcpy(mensagem_env.mtext, "teste de mensagem\0");
 		mensagem_env.mtype=1;
-   		msgsnd(idfila, &mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);sleep(1);*/
+   		msgsnd(idfila, &mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);sleep(1);*/
 	i=0;
 	while(recebeu==0){
 		//só envia uma vez
@@ -117,8 +128,11 @@ int main(){
 			strcpy(mensagem_rec.mtext, mensagem_env.mtext);
 	}
 
-	strcpy(executavel, mensagem_env.prog);
-	strcpy(executavel, mensagem_env.mtext);
+	strcpy(executavel,mensagem_env.mtext);
+	printf("\n[HIPER]CAMINHO = %s\n", executavel);
+	fflush(stdout);
+
+//	strcat(executavel, mensagem_env.prog);
 	time(&timer);
 	pid=fork();
 	mensagem_env.time_ini = clock();
@@ -138,12 +152,14 @@ int main(){
 	
 
 	if(getpid()==pid_pai){
- 		mensagem_mtype=TYPE_ESC;
-		for(i=1; i<=N; i++){
+  		tabela[0].time_ini=mensagem_env.time_ini;
+  		tabela[0].time_end=mensagem_env.time_end;
+ 		mensagem_env.mtype=TYPE_ESC;
+		for(i=0; i<=N; i++){
 			printf("\nno %d levou: %lu", i, (filhos[i].time_end - filhos[i].time_ini));
-			mensagem_env.ini=filhos[i].time_ini;
-			mensagem_env.end=filhos[i].time_end;
-   			msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+			mensagem_env.time_ini=filhos[i].time_ini;
+			mensagem_env.time_end=filhos[i].time_end;
+   			msgsnd(idfila, &mensagem_env, sizeof(mensagem_env)-sizeof(long), 0);
 			
  		}
 		printf("\n");
@@ -164,7 +180,7 @@ int main(){
 
 	return 0;}
 
-void cria_familia_hipercubo(struct tabela_processos *filho, struct tabela_processos *proprio, int idfila, struct mensagem *mensagem_env, int *pid_pai){
+void cria_familia_hipercubo( tabela_processos *filho,  tabela_processos *proprio, int idfila,  mensagem *mensagem_env, int *pid_pai){
 	int i;
 	pid_t pid;
 
@@ -179,7 +195,7 @@ void cria_familia_hipercubo(struct tabela_processos *filho, struct tabela_proces
 			//sleep(i+1);
   			//strcpy(mensagem_env->mtext, "teste de mensagem\0");
 			//mensagem_env.no = i;
-   			//msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   			//msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 			//printf("criou pid %d, no: %d\n", getpid(), proprio->no_ref);
 			break;
 		}
@@ -192,78 +208,78 @@ void cria_familia_hipercubo(struct tabela_processos *filho, struct tabela_proces
 
 }
 
-void envia_mensagem_hipercubo(struct tabela_processos *proprio, struct mensagem *mensagem_env, int idfila, int *enviou){
+void envia_mensagem_hipercubo( tabela_processos *proprio,  mensagem *mensagem_env, int idfila, int *enviou){
 		
 	if(proprio->no_ref==0){
 		//o famoso nó 0 manda a mensagem para os nós 1, 2,4 e 8
   		strcpy(mensagem_env->mtext, "teste no 0\0");
 		mensagem_env->mtype=1;
 		mensagem_env->no_dest = 3;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		mensagem_env->mtype=2;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		mensagem_env->mtype=4;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		mensagem_env->mtype=8;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		*enviou=1;
 	}
 
 	if(proprio->no_ref==1){
 		//nó 1 manda para 5 e 9
 		mensagem_env->mtype=5;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		mensagem_env->mtype=9;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		*enviou=1;
 	}
 	if(proprio->no_ref==2){
 		//nó 2 manda mensagem para 3, 6 e 10
 		mensagem_env->mtype=3;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		mensagem_env->mtype=6;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		mensagem_env->mtype=10;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		*enviou=1;
 	}
 	if(proprio->no_ref==4){
 		//nó 4 manda para 12		
 		mensagem_env->mtype=12;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		*enviou=1;
 	}
 	if(proprio->no_ref==9){
 		//nó 9 manda para 13		
 		mensagem_env->mtype=13;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		*enviou=1;
 	}
 	if(proprio->no_ref==3){
 		//nó 3 manda para 7 e 11	
 		mensagem_env->mtype=7;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		mensagem_env->mtype=11;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);	
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);	
 		*enviou=1;
 	}
 	if(proprio->no_ref==7){
 		//no 7 manda para 15
 		mensagem_env->mtype=15;
 		mensagem_env->no_dest = 3;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		*enviou=1;
 	}
 	if(proprio->no_ref==6){
 		//finalmente, 6 manda para 14
 		mensagem_env->mtype=14;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);	
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);	
 		*enviou=1;
 	}
 
 }
 
-void recebe_mensagem_hipercubo(struct tabela_processos *proprio, struct mensagem *mensagem_rec, int idfila, int *recebeu){
+void recebe_mensagem_hipercubo( tabela_processos *proprio,  mensagem *mensagem_rec, int idfila, int *recebeu){
 	long tam;
 	//printf("o que ha no proprio->ref de cada um: %d\n", proprio->no_ref);
 	switch (proprio->no_ref){
@@ -377,7 +393,7 @@ void recebe_mensagem_hipercubo(struct tabela_processos *proprio, struct mensagem
 	}
 }
 
-void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct mensagem *mensagem_env, struct mensagem *mensagem_rec, int idfila, struct mensagem *tabela){
+void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *mensagem_env,  mensagem *mensagem_rec, int idfila,  mensagem *tabela){
 
 	int i=0;
 	int recebeu_volta=0;
@@ -390,14 +406,14 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
   		//mensagem_env->time_ini=15;
   		//mensagem_env->time_end=150;
 		mensagem_env->mtype=15;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 	}
 
 	if(proprio->no_ref==7){
 		//no 7 manda estado de si mesmo
   		strcpy(mensagem_env->mtext, "retorno\0");
 		mensagem_env->mtype=7;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		//no 7 diz quantos nós vai receber
 		recebeu_volta=1;
 		while(i<recebeu_volta){
@@ -410,7 +426,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
 				mensagem_env->mtype=(15*10);
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 			}
 		}
@@ -422,7 +438,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
   		strcpy(mensagem_env->mtext, "retorno\0");
 		//aqui o mtype é o numero de si mesmo, que é multiplicado por 10 a cada nível
 		mensagem_env->mtype=11;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 	}
 
 
@@ -430,7 +446,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 		//no 3 manda estado de si mesmo
   		strcpy(mensagem_env->mtext, "retorno\0");
 		mensagem_env->mtype=3;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		//no 3 diz quantos nós vai receber (três, que são 11, 7 e 15(*10))
 		recebeu_volta=3;
 		while(i<recebeu_volta){
@@ -443,7 +459,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(11*10);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 3 mandou 11 pra cima\n");
 			}
@@ -454,7 +470,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(7*10);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 3 mandou 7 pra cima\n");
 			}
@@ -465,7 +481,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(15*100);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 3 mandou 15(*10) pra cima\n");
 			}
@@ -478,14 +494,14 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
   		strcpy(mensagem_env->mtext, "retorno\0");
 		//aqui o mtype é o numero de si mesmo, que é multiplicado por 10 a cada nível
 		mensagem_env->mtype=14;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 	}
 
 	if(proprio->no_ref==6){
 		//no 6 manda estado de si mesmo
   		strcpy(mensagem_env->mtext, "retorno\0");
 		mensagem_env->mtype=6;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		//no 6 diz quantos nós vai receber
 		recebeu_volta=1;
 		while(i<recebeu_volta){
@@ -496,7 +512,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(14*10);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 6 mandou 14 pra cima\n");
 			}
@@ -509,7 +525,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
   		strcpy(mensagem_env->mtext, "retorno\0");
 		//aqui o mtype é o numero de si mesmo, que é multiplicado por 10 a cada nível
 		mensagem_env->mtype=10;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 	}
 
 
@@ -517,7 +533,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 		//no 2 manda estado de si mesmo
   		strcpy(mensagem_env->mtext, "retorno\0");
 		mensagem_env->mtype=2;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		//no 2 diz quantos nós vai receber
 		recebeu_volta=7;sleep(1);
 		while(i<recebeu_volta){
@@ -528,7 +544,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(15000);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 2 mandou 15 pra cima\n");
 			}			
@@ -539,7 +555,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(7*100);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 2 mandou 7 pra cima\n");
 			}			
@@ -550,7 +566,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(11*100);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 2 mandou 11 pra cima\n");
 			}
@@ -561,7 +577,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(14*100);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 2 mandou 14 pra cima\n");
 			}			
@@ -572,7 +588,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(3*10);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 2 mandou 3 pra cima\n");
 			}			
@@ -583,7 +599,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(6*10);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 2 mandou 6 pra cima\n");
 			}			
@@ -594,7 +610,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(10*10);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 2 mandou 10 pra cima\n");
 			}
@@ -607,7 +623,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
   		strcpy(mensagem_env->mtext, "retorno\0");
 		//aqui o mtype é o numero de si mesmo, que é multiplicado por 10 a cada nível
 		mensagem_env->mtype=13;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 	}
 
 	if(proprio->no_ref==5){
@@ -615,7 +631,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
   		strcpy(mensagem_env->mtext, "retorno\0");
 		//aqui o mtype é o numero de si mesmo, que é multiplicado por 10 a cada nível
 		mensagem_env->mtype=5;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 	}
 
 
@@ -623,7 +639,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 		//no 9 manda estado de si mesmo
   		strcpy(mensagem_env->mtext, "retorno\0");
 		mensagem_env->mtype=9;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		//no 9 diz quantos nós vai receber
 		recebeu_volta=1;
 		while(i<recebeu_volta){
@@ -634,7 +650,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(13*10);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 9 mandou 13 pra cima\n");
 			}
@@ -646,7 +662,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 		//no 1 manda estado de si mesmo
   		strcpy(mensagem_env->mtext, "retorno\0");
 		mensagem_env->mtype=1;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		//no 1 diz quantos nós vai receber (três, que são 5, 9 e 13(*10))
 		recebeu_volta=3;
 		while(i<recebeu_volta){
@@ -658,7 +674,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(5*10);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 1 mandou 5 pra cima\n");
 			}
@@ -669,7 +685,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(9*10);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 1 mandou 5 pra cima\n");
 			}
@@ -680,7 +696,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(13*100);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 1 mandou 13(*100) pra cima\n");
 			}
@@ -693,7 +709,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
   		strcpy(mensagem_env->mtext, "retorno\0");
 		//aqui o mtype é o numero de si mesmo, que é multiplicado por 10 a cada nível
 		mensagem_env->mtype=12;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 	}
 
 
@@ -701,7 +717,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 		//no 4 manda estado de si mesmo
   		strcpy(mensagem_env->mtext, "retorno\0");
 		mensagem_env->mtype=4;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		//no 4 diz quantos nós vai receber
 		recebeu_volta=1;
 		while(i<recebeu_volta){
@@ -712,7 +728,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
 				mensagem_env->mtype=(12*10);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
-   				msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
 				//printf("no 4 mandou 12 pra cima\n");
 			}
@@ -725,7 +741,7 @@ void envia_reverso_mensagem_hipercubo(struct tabela_processos *proprio, struct m
   		strcpy(mensagem_env->mtext, "retorno\0");
 		//aqui o mtype é o numero de si mesmo, que é multiplicado por 10 a cada nível
 		mensagem_env->mtype=8;
-   		msgsnd(idfila, mensagem_env, sizeof(struct mensagem)-sizeof(long), 0);
+   		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 	}
 
 	if(proprio->no_ref==0){

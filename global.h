@@ -25,6 +25,7 @@
 #define TAM_TOTAL_MSG 153
 #define KEY 123
 #define N_NOS_FATTREE 15
+#define N_NOS_CUBO_TORUS 16
 
 
 
@@ -90,7 +91,7 @@ int cont_job = 0, menor_job = 0, menor_delay = 10000;
 
 //funcoes principais para comunicacao com a topologia FATTREE
 void inicializa_fattree(void);
-void aciona_execucao_prog(char *caminho_prog, char *programa);
+// void aciona_execucao_prog(char *caminho_prog, char *programa);
 void exclui_fila_mensagem(void);
 void the_end(int sig);
 
@@ -99,10 +100,10 @@ void cria_fila_mensagem_postergado(void);
 
 //funcoes auxiliares para comunicacao com a topologia FATTREE
 void cria_fila_mensagem(void);
-void ordem_executa_programa(char *caminho_prog, char *programa);
-void espera_resultado_execucao(void);
-void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end);
-int is_todos_livres(void);
+// void ordem_executa_programa(char *caminho_prog, char *programa);
+// void espera_resultado_execucao(void);
+// void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end);
+// int is_todos_livres(void);
 int search_proc(int ref, int option);
 //-------------------------------
 

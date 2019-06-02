@@ -60,22 +60,21 @@ void inicializa_fattree(void)
 
 
 
+// void aciona_execucao_prog(char *caminho_prog, char *programa)
+// {
+// 	// printf("VOU EXECUTAR\n");
+// 	if (is_todos_livres())
+// 	{
+// 		// printf("EXECUTANDO...\n");
+// 		ordem_executa_programa(caminho_prog, programa);
 
-void aciona_execucao_prog(char *caminho_prog, char *programa)
-{
-	// printf("VOU EXECUTAR\n");
-	if (is_todos_livres())
-	{
-		// printf("EXECUTANDO...\n");
-		ordem_executa_programa(caminho_prog, programa);
-
-		espera_resultado_execucao();
-	}
-	else
-	{
-		printf("Não posso executar. Nem todos os processos estão livres!\n");
-	}
-}
+// 		espera_resultado_execucao();
+// 	}
+// 	else
+// 	{
+// 		printf("Não posso executar. Nem todos os processos estão livres!\n");
+// 	}
+// }
 
 
 
@@ -132,67 +131,67 @@ void exclui_fila_mensagem(void)
 * Essa funcao envia a mensagem com o nome do programa a ser executado
 * e marca os processos como ocupados
 */
-void ordem_executa_programa(char *caminho_prog, char *programa)
-{
-	mensagem msg;
+// void ordem_executa_programa(char *caminho_prog, char *programa)
+// {
+// 	mensagem msg;
 
-    /*
-	* enviado para o escalonador dados do processo
-	* notificando que já foi criado e está livre
-	*/
-	msg.mtype  = TYPE_NO_1; //coloca type_no_0 quando quer enviar para o escalonador
-	msg.pid = pid_principal;
-	msg.no_source = TYPE_ESC; /*TYPE_NO_eu*/
-	msg.no_dest = TYPE_ALL;
-	msg.livre = false;
-	msg.operacao = TYPE_EXEC;
-	(void) strcpy(msg.mtext,caminho_prog) ;
-	(void) strcpy(msg.prog,programa) ;
+//     /*
+// 	* enviado para o escalonador dados do processo
+// 	* notificando que já foi criado e está livre
+// 	*/
+// 	msg.mtype  = TYPE_NO_1; //coloca type_no_0 quando quer enviar para o escalonador
+// 	msg.pid = pid_principal;
+// 	msg.no_source = TYPE_ESC; /*TYPE_NO_eu*/
+// 	msg.no_dest = TYPE_ALL;
+// 	msg.livre = false;
+// 	msg.operacao = TYPE_EXEC;
+// 	(void) strcpy(msg.mtext,caminho_prog) ;
+// 	(void) strcpy(msg.prog,programa) ;
 
-	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
-	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
-	}
+// 	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+// 	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
+// 	}
 
 
-	for (int i = 0; i < N_NOS_FATTREE; ++i)
-	{
-		tab_proc[i].livre = 0;
-	}
+// 	for (int i = 0; i < N_NOS_FATTREE; ++i)
+// 	{
+// 		tab_proc[i].livre = 0;
+// 	}
 
-}
+// }
 
 /*
 * Essa funcao recebe a resposta dos processos
 * e guarda as informações na tabela de processos
 */
-void espera_resultado_execucao(void)
-{
-	int contador_no_ref = 0;
-	int index;
-	mensagem msg;
+// void espera_resultado_execucao(void)
+// {
+// 	int contador_no_ref = 0;
+// 	int index;
+// 	mensagem msg;
 
-	while(contador_no_ref < N_NOS_FATTREE)
-	{
-		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_ESC, IPC_NOWAIT) < 0) {
-		   // perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
-		}
-		else
-		{
-			if (msg.operacao == TYPE_FIN)
-			{
-				index = search_proc(msg.pid, 2);
+// 	while(contador_no_ref < N_NOS_FATTREE)
+// 	{
+// 		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_ESC, IPC_NOWAIT) < 0) {
+// 		   // perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
+// 		}
+// 		else
+// 		{
+// 			if (msg.operacao == TYPE_FIN)
+// 			{
+// 				index = search_proc(msg.pid, 2);
 
-				if (index != -1)
-				{
-					// printf("[ESCALONADOR]PROCESSO %d finalizou | %lu -> %lu\n", tab_proc[index].no_ref, msg.time_ini, msg.time_end);
-					marca_gerente_livre(msg.pid, msg.time_ini, msg.time_end);
+// 				if (index != -1)
+// 				{
+// 					// printf("[ESCALONADOR]PROCESSO %d finalizou | %lu -> %lu\n", tab_proc[index].no_ref, msg.time_ini, msg.time_end);
+// 					marca_gerente_livre(msg.pid, msg.time_ini, msg.time_end);
 
-					contador_no_ref++;
-				}
-			}
-		}
-	}
-}
+// 					contador_no_ref++;
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
 
 void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end)

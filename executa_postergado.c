@@ -33,7 +33,7 @@ int main(int argc, char const *argv[])
 
   while(1){
     if (msgrcv(msgid, &msg0, sizeof(msg0), TYPE_ESC_JOBS, IPC_NOWAIT) < 0) {
-		    perror("[postergado]Erro na recepcao da mensagem") ;
+		    // perror("[postergado]Erro na recepcao da mensagem") ;
 		}
     else {
 		  msg.mtype  = TYPE_ESC_EXEC;
