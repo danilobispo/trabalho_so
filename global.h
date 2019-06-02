@@ -23,7 +23,7 @@
 //quantos bytes tem na struct da mensagem
 //100(vetor)+20(vetor)+4(int)+1(bool)+4(int)+4(int)+4(int)+8(lu)+8(lu)
 #define TAM_TOTAL_MSG 153
-#define KEY 123
+#define KEY_FAT_TREE 33647
 #define N_NOS_FATTREE 15
 #define N_NOS_CUBO_TORUS 16
 
@@ -51,7 +51,7 @@ typedef struct
 	time_t tempo_futuro;
     time_t inicio;
     bool executado;
-    int makespan;
+    unsigned long makespan;
 }tabela_job_processos;
 
 typedef struct
@@ -85,14 +85,12 @@ int msgid;
 int pid_principal;
 tabela_job_processos tab_job[100];
 
-//varáveis globais
 
-int cont_job = 0, menor_job = 0, menor_delay = 10000;
 
 //funcoes principais para comunicacao com a topologia FATTREE
 void inicializa_fattree(void);
 // void aciona_execucao_prog(char *caminho_prog, char *programa);
-void exclui_fila_mensagem(void);
+//void exclui_fila_mensagem(void);
 void the_end(int sig);
 
 //função auxiliares para comunicação com o executa postergado

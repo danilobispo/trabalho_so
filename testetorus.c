@@ -175,7 +175,7 @@ int main(){
         
             // Caso especifico: distancia entre os nos eh 1, mas o no nao eh vizinho do outro
             // ex 8 e 7 ou 7 e 8
-            
+
             if (dist == 1 && !isVizinho(no_ref, destino) ) {
 //                DEBUG
 //                printf("Nao sao vizinhos\n");
@@ -198,9 +198,9 @@ int main(){
                 }
             }
 //        DEBUG
-            for (i = 0; i < 4; i++) {
-//                printf("vizinhos: %d\t", no_torus[no_ref].vizinhos[i]);
-            }
+//             for (i = 0; i < 4; i++) {
+// //                printf("vizinhos: %d\t", no_torus[no_ref].vizinhos[i]);
+//             }
             menorvalor = destino - no_torus[no_ref].vizinhos[0];
             // Calculo o modulo, que eh a distância absoluta entre os nos, independente de ser menor ou maior que 0
             menorvalor = abs(menorvalor);

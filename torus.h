@@ -44,6 +44,7 @@ static NO_TORUS noTorus[n_nos_topologia];
 
 int pid;
 int no_ref;
+int contador_rcv;
 int msgid;
 
 time_t timer_inicio;
@@ -60,10 +61,21 @@ void adicionarVizinho(int noAtual, int vizinho);
 void informarVizinho(int no_atual, int noIdVizinho);
 void imprimeNosTorus();
 void criaProcessosTorus();
+int isVizinho(int no_ref, int no);
+int calculaCaminho(mensagem msg, int no_dest, int no_orig);
+int isNosLivresTorus();
+void executaProgramaNosTorus();
+
 
 //Remover depois de juntar com a main
 void inicializaTorus();
 void cria_fila_mensagem();
+void trata_mensagem(char *caminho_prog, char *programa);
+void fim_programa(unsigned long time_ini, unsigned long time_end);
+void aciona_execucao_prog(char *caminho_prog, char *programa);
+void ordem_executa_programa(char *caminho_prog, char *programa);
 
+int search_proc(int ref, int option);
+void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end);
 
 

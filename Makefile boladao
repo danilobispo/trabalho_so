@@ -1,0 +1,25 @@
+# My first makefile
+
+# main: $(SYSTEMC_HOME) ula.o ula_tb.o main.o
+# 	g++ -o ula ula.o ula_tb.o main.o -I. -I$(SYSTEMC_HOME)/include -L. -L$(SYSTEMC_HOME)/lib-macosx64 -lsystemc
+
+escalonador: fattree.o fattree.o torus.o hipercubo.o shutdown global.h
+	gcc -o escalonador fattree.o torus.o hipercubo.o shutdown
+
+fattree.o: fattree.c fattree.h
+	gcc -c fattree.c fattree.h
+
+hipercubo: hipercubo.c
+gcc hipercubo.c -o hipercubo
+
+torus.o: torus.c torus.h
+gcc torus.c -o torus.o
+
+escalonador: escalonador.c escalonador.h global.h
+gcc escalonador.c global.h -o escalonador
+
+shutdown: shutdown.c
+gcc shutdown.c -o shutdown
+
+clean:
+	rm -rf *.o *~ escalonador
