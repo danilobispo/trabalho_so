@@ -1,4 +1,5 @@
 #include "escalonador.h"
+#include "fattree.h"
 
 
 int main(int argc, char const *argv[])
@@ -44,10 +45,8 @@ int main(int argc, char const *argv[])
 	//inicializa a tologia depois da escolha
 	inicializa_topologia_escolhida();
 
-	printf("CHEGUEI AQUI 65565");
-	fflush(stdout);
 
-	
+
 
 	//fica em loop esperando mensagem do executa postergado
 	//e manda executar o programa na hora
@@ -102,9 +101,6 @@ void recebi_msg_postergado (void){
 	msg_postergado msg;
 	time_t tempo_inicio;
 
-	printf("CHEGUEI AQUI 77777");
-	fflush(stdout);
-
 	while(1){
 
 
@@ -115,7 +111,8 @@ void recebi_msg_postergado (void){
 		    //perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
 		}
 		else
-		{	
+		{	programa_executado = 0;
+
 			strcpy(tab_job[cont_job].nome_programa,msg.nome_programa);
 			tab_job[cont_job].tempo_delay = msg.tempo_delay;
 			tab_job[cont_job].inicio = time(NULL);
@@ -139,7 +136,6 @@ void recebi_msg_postergado (void){
 
 		}
 	}
-	printf ("chegou aqui");
 }
 
 
@@ -152,55 +148,56 @@ void espera_execucao_job (void){
 	//caso seja a hora certa manda executar o programa
 	if (temp_agora == tab_job[menor_job].tempo_futuro){
 
-		printf("Tempo agora = %ld | Tempo futuro = %ld", temp_agora, tab_job[menor_job].tempo_futuro);
-		fflush(stdout);
-
-		tab_job[menor_job].executado = 1;
-		menor_delay = 10000;
-
-		if(topologia == 'F')
+		if(!programa_executado)
 		{
+			tab_job[menor_job].executado = 1;
+			menor_delay = 10000;
+			programa_executado = 1;
 
-			//organiza as infos da fila de acordo com cada topologia
-			//se precisar cria, ou salva o id da fila
-			infos_fila_msg();
-
-			//envia mensagem para a fila para executar o programa
-			aciona_execucao_prog(tab_job[menor_job].nome_programa, "a", N_NOS_FATTREE);
-		}
-		else if (topologia == 'H')
-		{
-			//setando todos os processos como livres
-			//pois a execucao ainda nao comecou
-			for (int i = 0; i < 16; ++i)
+			if(topologia == 'F')
 			{
-				tab_proc[i].livre = 1;
-			}
 
-			//o escalonador se foerkeia para chamar a topologia
-			int pid_hyper = fork();
-
-			//se for o escalonador ele manda executar o programa
-			if (pid_hyper != 0)
-			{
 				//organiza as infos da fila de acordo com cada topologia
 				//se precisar cria, ou salva o id da fila
 				infos_fila_msg();
 
 				//envia mensagem para a fila para executar o programa
-				aciona_execucao_prog(tab_job[menor_job].nome_programa, "a", N_NOS_CUBO_TORUS);
+				aciona_execucao_prog(tab_job[menor_job].nome_programa, "a", N_NOS_FATTREE);
+			}
+			else if (topologia == 'H')
+			{
+				//setando todos os processos como livres
+				//pois a execucao ainda nao comecou
+				for (int i = 0; i < 16; ++i)
+				{
+					tab_proc[i].livre = 1;
+				}
 
-				wait(&status);
+				//o escalonador se foerkeia para chamar a topologia
+				int pid_hyper = fork();
+
+				//se for o escalonador ele manda executar o programa
+				if (pid_hyper != 0)
+				{
+					//organiza as infos da fila de acordo com cada topologia
+					//se precisar cria, ou salva o id da fila
+					infos_fila_msg();
+
+					//envia mensagem para a fila para executar o programa
+					aciona_execucao_prog(tab_job[menor_job].nome_programa, "a", N_NOS_CUBO_TORUS);
+
+					wait(&status);
+				}
+				else
+				{
+					execl("./hipercubo", "a", NULL);
+				}
 			}
 			else
 			{
-				execl("./hipercubo", "a", NULL);
+				//envia mensagem para a fila para executar o programa
+				//aciona_execucao_prog(tab_job[menor_job].nome_programa, "a", N_NOS_FATTREE);
 			}
-		}
-		else
-		{
-			//envia mensagem para a fila para executar o programa
-			//aciona_execucao_prog(tab_job[menor_job].nome_programa, "a", N_NOS_FATTREE);
 		}
 	}
 }
@@ -210,7 +207,7 @@ void inicializa_topologia_escolhida(void)
 {
 	if(topologia == 'H')
 	{
-		printf("Topologia Hyper cubo");
+		//printf("Topologia Hyper cubo");
 
 		start_hyper_cubo();
 	}
@@ -222,7 +219,7 @@ void inicializa_topologia_escolhida(void)
 	}
 	else if (topologia == 'F')
 	{
-		printf("Topologia Fat tree");
+		//printf("Topologia Fat tree");
 
 		start_fat_tree();
 	}
@@ -247,8 +244,68 @@ void start_torus(void)
 void start_fat_tree(void)
 {
 	//cria a topologia com a chamada de codigo da lais
+	
+	/*
+	* ORDEM DAS FUNCOES PARA A TOPOLOGIA FATTREE 
+	*/
+	//funcao inicia a topologia e deixa-a pronta pra uso
+	inicializa_fattree();
 }
 
+/*
+* funcao que inicializa topologia
+* quando a topoliga estiver pronta para ser usada
+* retornará 1, caso contrarário 0
+*/
+void inicializa_fattree(void)
+{
+	mensagem msg;
+	int contador_no_ref = 0;
+
+
+	/*guarda o pid do escalonador*/
+	pid_principal = getpid();
+
+
+	/*cria a fila de mensagem para comunicacao*/
+	cria_fila_mensagem();
+
+	/* 
+	* funcao que cria os processos
+	*/
+	cria_fattree();
+
+}
+
+/*
+* criacao de uma fila de mensagens para leitura se
+* ela ainda nao existe
+*/
+void cria_fila_mensagem(void)
+{
+	mensagem msg;
+    key_fila_msg = KEY_FAT_TREE;
+
+	if (( msgid_fila_topologia = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
+	     perror("Erro de msgget") ;
+	}
+	else
+	{
+		//avisa ao processo shutdown o pid do escalonador
+		msg.mtype  = TYPE_SHUTDOWN;
+		msg.pid = pid_principal;
+		msg.no_source = pid_principal; /*TYPE_NO_eu*/
+		msg.no_dest = 0;
+		msg.operacao = 0;
+		(void) strcpy(msg.mtext,"pid escalonador") ;
+
+		if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
+			perror("[ESCALONADOR]Erro no envio da mensagem") ;
+		}
+		////////
+	}
+
+}
 
 /*
 * Essa funcao envia a mensagem com o nome do programa a ser executado
@@ -305,6 +362,10 @@ void infos_fila_msg(void)
 	}
 	else if (topologia == 'F')
 	{
+		/*  recuperacao do id da fila de mensagens da topologia hypercubo      */
+		if ((msgid_fila_topologia = msgget(KEY_FAT_TREE,0)) == -1) {
+			// perror("Erro na criacao da fila do hyper cubo") ;
+		}
 
 	}
 }
@@ -313,7 +374,6 @@ int is_todos_livres(int n_nos)
 {
 	for (int i = 0; i < n_nos; ++i)
 	{
-		printf("tab[%d].livre = %d",i, tab_proc[i].livre);
 		if (tab_proc[i].livre == 0)
 		{
 			return 0;
@@ -326,17 +386,10 @@ int is_todos_livres(int n_nos)
 
 void aciona_execucao_prog(char *caminho_prog, char *programa, int n_nos)
 {
-	printf("VOU EXECUTAR | nos = %d\n", n_nos);
-	fflush(stdout);
-
 	if (is_todos_livres(n_nos))
 	{
-		printf("[ESC]EXECUTANDO...\n");
-		fflush(stdout);
 		ordem_executa_programa(caminho_prog, programa, n_nos);
 		
-		printf("[ESC]ESPERANDO RESULTADO...");
-		fflush(stdout);
 		espera_resultado_execucao(n_nos);
 	}
 	else
@@ -359,7 +412,7 @@ void espera_resultado_execucao(int n_nos)
 	while(contador_no_ref < n_nos)
 	{
 		if (msgrcv(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, TYPE_ESC, IPC_NOWAIT) < 0) {
-		//    perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
+		    //perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
 		}
 		else
 		{
@@ -377,6 +430,8 @@ void espera_resultado_execucao(int n_nos)
 			// }
 		}
 	}
+	tab_job[cont_job-1].makespan = maior_tempo_fim - menor_tempo_inicio;
+	printf("[ESCALONADOR]JOB %d | MAKESPAN %lu\n", cont_job-1, tab_job[cont_job-1].makespan);
 }
 
 /*
@@ -409,13 +464,25 @@ int search_proc(int ref, int option)
 
 void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end, int n_nos)
 {
-	for (int i = 0; i < n_nos; ++i)
+	if(menor_tempo_inicio > time_ini)
 	{
-		if (tab_proc[i].pid == ref)
+		menor_tempo_inicio = time_ini;
+	}
+
+	if (maior_tempo_fim < time_end)
+	{
+		maior_tempo_fim = time_end;
+	}
+
+
+	if (topologia != 'H')
+	{
+		for (int i = 0; i < n_nos; ++i)
 		{
-			tab_proc[i].livre = 1;
-			tab_proc[i].time_ini = time_ini;
-			tab_proc[i].time_end = time_end;
+			if (tab_proc[i].pid == ref)
+			{
+				tab_proc[i].livre = 1;
+			}
 		}
 	}
 }

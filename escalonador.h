@@ -1,14 +1,20 @@
 #ifndef _ESCALA_H
 #define _ESCALA_H
 
-
 #include "global.h"
+
 
 #define KEY_ESC_POSTERGADO 12496
 
 char topologia;
 int msgid_postergado;
 int msgid_fila_topologia;
+int programa_executado = 0;
+
+//varáveis globais
+int cont_job = 0, menor_job = 0, menor_delay = 10000;
+time_t menor_tempo_inicio = 0;
+time_t maior_tempo_fim = 0;
 
 void inicia_tab_jobs(void);
 void busc_prox_prog (void);

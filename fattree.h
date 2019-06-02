@@ -1,7 +1,8 @@
 #ifndef _FATTREE_H
 #define _FATTREE_H
 
-
+#include <stdio.h> 
+#include <stdlib.h>
 #include <signal.h> 
 #include <unistd.h>
 #include <errno.h>
@@ -28,14 +29,14 @@ typedef struct
 
 int pid;
 int no_ref;
-int msgid;
+int msgid_fila_topologia;
 nos nos_vetor[N_NOS];
 
 time_t timer_inicio;
 time_t timer_final;
 struct tm *horarioLocal_inicio;
 struct tm *horarioLocal_final;
-clock_t tempos[2];
+time_t tempos[2];
 
 
 void cria_fattree(void);

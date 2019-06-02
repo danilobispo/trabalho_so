@@ -1,7 +1,5 @@
-#include <stdio.h> 
-#include <stdlib.h>
-
 #include "fattree.h"
+
 
 
 
@@ -43,6 +41,7 @@ void cria_fattree()
 
 	if (getpid() != pid_principal)
 	{
+		pid = getpid();
 		executa_programa();
 	}
 }
@@ -78,7 +77,7 @@ void executa_programa(void)
 
 	while(1)
 	{
-		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, no_ref, IPC_NOWAIT) < 0) {
+		if (msgrcv(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, no_ref, IPC_NOWAIT) < 0) {
 	   		// perror("[TRANSMITE]Erro na recepcao da mensagem") ;
 		}
 		else
@@ -90,9 +89,9 @@ void executa_programa(void)
 
 		    	roteamento_msg(msg);
 
-		    	tempos[0] = clock();
+		    	tempos[0] = time(NULL);
 		    	trata_mensagem(msg.mtext, msg.prog);
-		    	tempos[1] = clock();
+		    	tempos[1] = time(NULL);
 
 				fim_programa(tempos[0], tempos[1]);
 			}
@@ -116,14 +115,16 @@ void fim_programa(unsigned long time_ini, unsigned long time_end)
 	msg.time_end = time_end;
 	(void) strcpy(msg.mtext,"no terminou exec") ;
 	
-	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+	if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 	   perror("[CRIANDO]Erro no envio da mensagem") ;
 	}
+
+	
 
 
 	while(1)
 	{
-		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, no_ref, IPC_NOWAIT) < 0) {
+		if (msgrcv(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, no_ref, IPC_NOWAIT) < 0) {
 	   		// perror("[TRANSMITE]Erro na recepcao da mensagem") ;
 		}
 		else
@@ -153,6 +154,9 @@ void fim_programa(unsigned long time_ini, unsigned long time_end)
 			}
 		}
 	}
+
+	//printf("[FAT] ROTEEI TODAS AS MENSAGENS");
+	fflush(stdout);
 }
 
 
@@ -174,7 +178,7 @@ void roteamento_msg(mensagem msg)
 				// printf("ROTEAR PARA NO 3 -> %d\n", no_ref);
 				msg.mtype  = TYPE_NO_3;
 				// msg.no_dest  = TYPE_NO_3;
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
@@ -186,7 +190,7 @@ void roteamento_msg(mensagem msg)
 				//enviar para no 6
 				// printf("ROTEAR PARA NO 6 -> %d\n", no_ref);
 				msg.mtype = TYPE_NO_6;
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
@@ -198,7 +202,7 @@ void roteamento_msg(mensagem msg)
 				//enviar para no 13
 				// printf("ROTEAR PARA NO 13 -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_NO_13;
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
@@ -210,7 +214,7 @@ void roteamento_msg(mensagem msg)
 				//enviar para no 10
 				// printf("ROTEAR PARA NO 10 -> %d\n", no_ref);
 				msg.mtype = TYPE_NO_10;
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
@@ -221,13 +225,13 @@ void roteamento_msg(mensagem msg)
 			{
 				msg.mtype += 1;
 				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 				
 				msg.mtype += 1;
 				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
@@ -236,7 +240,7 @@ void roteamento_msg(mensagem msg)
 				//enviar para no 2
 				// printf("ROTEAR PARA NO 2 -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_NO_2;
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
@@ -247,12 +251,12 @@ void roteamento_msg(mensagem msg)
 			{
 				msg.mtype += 1;
 				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 				msg.mtype += 1;
 				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
@@ -261,7 +265,7 @@ void roteamento_msg(mensagem msg)
 				//enviar para no 1
 				// printf("ROTEAR PARA NO 9 -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_NO_9;
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
@@ -272,13 +276,13 @@ void roteamento_msg(mensagem msg)
 			{
 				msg.mtype += 1;
 				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 				
 				msg.mtype += 3;
 				// printf("ROTEAR PARA NO %ld -> %d\n",msg.mtype, no_ref);
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
@@ -287,7 +291,7 @@ void roteamento_msg(mensagem msg)
 				//enviar para no 0
 				// printf("ROTEAR PARA NO 1 -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_NO_1;
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
@@ -297,20 +301,20 @@ void roteamento_msg(mensagem msg)
 			{
 				// printf("ROTEAR PARA NO 2 -> %d\n", no_ref);
 				msg.mtype = TYPE_NO_1+1;
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 				// printf("ROTEAR PARA NO 9 -> %d\n", no_ref);
 				msg.mtype = TYPE_NO_1+8;
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					// perror("Erro no envio da mensagem") ;
 				}
 			}
 			else if(type_escalonador)
 			{
-				// printf("ROTEAR PARA ESC -> %d | %d\n", no_ref, msg.pid);
+				//printf("ROTEAR PARA ESC -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_ESC;
-				if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 					perror("Erro no envio da mensagem") ;
 				}
 			}
