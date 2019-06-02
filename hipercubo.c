@@ -90,7 +90,7 @@ int main(){
 	while(1){
 
 		if(msgrcv(idfila_esc, &mensagem_rec, sizeof(mensagem_rec), 1, IPC_NOWAIT)<0){
-			printf("\nErro no no 1");
+			perror("\nErro no no 1");
 			fflush(stdout);
 		}else{
 
@@ -145,16 +145,21 @@ int main(){
   		mensagem_env.time_ini=tabela[0].time_ini;
   		mensagem_env.time_end=tabela[0].time_end;
  		mensagem_env.mtype=TYPE_ESC;
+		printf("[HIPER]mtype MENSAGEM = %d", mensagem_env.mtype);
+		fflush(stdout);
    		printf("\nno %d levou: %lu  -  %lu", i, tabela[i].time_end, (tabela[0].time_end - tabela[0].time_ini));
-		msgsnd(idfila, &mensagem_env, sizeof(mensagem_env)-sizeof(long), 0);
+		msgsnd(idfila_esc, &mensagem_env, sizeof(mensagem_env)-sizeof(long), 0);
 		for(i=0; i<=N; i++){
 			printf("\nno %d levou: %lu  -  %lu", i, tabela[i].time_end, (tabela[i].time_end - tabela[i].time_ini));
 			mensagem_env.time_ini=tabela[i].time_ini;
 			mensagem_env.time_end=tabela[i].time_end;
-   			msgsnd(idfila, &mensagem_env, sizeof(mensagem_env)-sizeof(long), 0);
+   			msgsnd(idfila_esc, &mensagem_env, sizeof(mensagem_env)-sizeof(long), 0);
 			
  		}
 		printf("\n");
+
+		printf("[HIPER]ID FILA = %d", idfila_esc);
+		fflush(stdout);
 
 		sleep(30);
 		if(msgctl(idfila, IPC_RMID, &mensagem_env) != 0)

@@ -96,6 +96,11 @@ void cria_fila_shutdown(void)
 		////////
 	}
 
+
+	printf("[ESCALONADOR] ID SHUTDOWN = %d\n", msgid_shutdown);
+	fflush(stdout);
+
+
 }
 
 /*
@@ -110,6 +115,9 @@ void cria_fila_mensagem_postergado(void)
 	if (( msgid_postergado = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
 	     perror("Erro de msgget") ;
 	}
+
+	printf("[ESCALONADOR] ID POSTERGADO = %d\n", msgid_postergado);
+	fflush(stdout);
 }
 
 void inicia_tab_jobs(void){
@@ -222,6 +230,8 @@ void espera_execucao_job (void){
 
 					//envia mensagem para a fila para executar o programa
 					aciona_execucao_prog(tab_job[menor_job].nome_programa, "a", N_NOS_CUBO_TORUS);
+
+					printf("[ESCALONADOR]EXECUTA AQUI");
 
 					wait(&status);
 				}
@@ -353,11 +363,17 @@ void ordem_executa_programa(char *caminho_prog, char *programa, int n_nos)
 	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
 	}
 
+	
+	printf("[ESCALONADOR] mandei executar\n");
+	fflush(stdout);
 
 	for (int i = 0; i < n_nos; ++i)
 	{
 		tab_proc[i].livre = 0;
 	}
+
+	printf("[ESCALONADOR] todos ocupados\n");
+	fflush(stdout);
 }
 
 //organiza as infos das filas de acordo com cada topologia
@@ -375,6 +391,9 @@ void infos_fila_msg(void)
 				break;
 			}
 		}
+
+		printf("[ESCALO0NADOR] id fila PRIMEIRO = %d\n", msgid_fila_topologia);
+		fflush(stdout);
 		
 	}
 	else if (topologia == 'T')
@@ -411,6 +430,9 @@ void aciona_execucao_prog(char *caminho_prog, char *programa, int n_nos)
 	{
 		ordem_executa_programa(caminho_prog, programa, n_nos);
 		
+		printf("VOU EXPERAR MENSAGENS\n");
+		fflush(stdout);
+
 		espera_resultado_execucao(n_nos);
 	}
 	else
