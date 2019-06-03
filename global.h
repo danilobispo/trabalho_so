@@ -1,3 +1,11 @@
+/*
+* Grupo:
+* Laís Mendes Gonçalves (110033647)
+* Guilherme de Oliveira Silva (110012496)
+* Danilo José Bispo Galvão (120114852)
+* Helena Schubert I. L. Silva (100012311)
+*/
+
 #ifndef _GLOBAL_H
 #define _GLOBAL_H
 
