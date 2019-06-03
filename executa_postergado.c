@@ -41,6 +41,7 @@ int main(int argc, char const *argv[])
 		  msg.tempo_delay = delay;
 		  (void) strcpy(msg.nome_programa,nome_programa);
 
+
       if ((msgsnd(msgid, &msg, sizeof(msg), 0)) == -1) {
 	       perror("Erro de msgget") ;
 	    }

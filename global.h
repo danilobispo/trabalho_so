@@ -47,6 +47,7 @@ typedef struct
 {
 	int jobs;
 	char nome_programa[100];
+    char nome_programa_sem_path[100];
     int tempo_delay;
 	time_t tempo_futuro;
     time_t inicio;

@@ -5,6 +5,8 @@
 int main(int argc, char const *argv[])
 {
 	msg_postergado msg;
+	const char delimitador_barra[2] = "/";
+   	char *token;
 
 	// Pegando a topologia e verificando formato
 	if ((argc > 2) || (argc < 2)){
@@ -158,7 +160,26 @@ void recebi_msg_postergado (void){
 		else
 		{	programa_executado = 0;
 
+
+			printf("\nJob: %d\n", msg.job);
+			printf("Delay: %d\n", msg.tempo_delay);
+			printf("Nome: %s\n", msg.nome_programa);
+			printf("Type %ld\n", msg.mtype);
+
 			strcpy(tab_job[cont_job].nome_programa,msg.nome_programa);
+
+			//quebrando string
+			const char delimitador_barra[2] = "/";
+			const char delimitador_ponto[2] = ".";
+  			char *token;
+			char nome_programa_aux[100];
+			token = strtok(msg.nome_programa, delimitador_barra);
+			token = strtok(NULL, delimitador_barra);
+			strcpy (nome_programa_aux,token);
+			token = strtok(nome_programa_aux, delimitador_ponto);
+
+			strcpy(tab_job[cont_job].nome_programa_sem_path,token);
+			
 			tab_job[cont_job].tempo_delay = msg.tempo_delay;
 			tab_job[cont_job].inicio = time(NULL);
 			tab_job[cont_job].tempo_futuro = tab_job[cont_job].tempo_delay + tab_job[cont_job].inicio;
@@ -166,11 +187,6 @@ void recebi_msg_postergado (void){
 			tab_job[cont_job].executado = 0;
 
 			busc_prox_prog();
-
-			printf("\nJob: %d\n", msg.job);
-			printf("Delay: %d\n", msg.tempo_delay);
-			printf("Nome: %s\n", msg.nome_programa);
-			printf("Type %ld\n", msg.mtype);
 
 			cont_job++;
 			msg.job = cont_job;
