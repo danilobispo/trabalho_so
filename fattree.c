@@ -315,7 +315,7 @@ void roteamento_msg(mensagem msg)
 				//printf("ROTEAR PARA ESC -> %d | %d\n", no_ref, msg.pid);
 				msg.mtype = TYPE_ESC;
 				if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
-					perror("Erro no envio da mensagem") ;
+					//perror("Erro no envio da mensagem") ;
 				}
 			}
 			break;

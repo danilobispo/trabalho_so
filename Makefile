@@ -1,21 +1,28 @@
 # My first makefile
 
-# main: $(SYSTEMC_HOME) ula.o ula_tb.o main.o
-# 	g++ -o ula ula.o ula_tb.o main.o -I. -I$(SYSTEMC_HOME)/include -L. -L$(SYSTEMC_HOME)/lib-macosx64 -lsystemc
+all: escalonador shutdown executa_postergado
 
-main: fattree.o main.o
-	gcc -o escalonador fattree.o main.o
+escalonador: escalonador.o fattree.o torus.o global.h
+	gcc -o escalonador fattree.o torus.o escalonador.o global.h
 
 
-fattree.o: fattree.c fattree.h
-	gcc -c fattree.c fattree.h
+hipercubo: hipercubo.c
+	gcc hipercubo.c -o hipercubo
 
-# ula_tb.o: ula_tb.cpp ula_tb.h
-# 	g++ -c ula_tb.cpp ula_tb.h -I. -I$(SYSTEMC_HOME)/include -L. -L$(SYSTEMC_HOME)/lib-macosx64 -lsystemc
+torus.o: torus.c torus.h global.h
+	gcc -c torus.c torus.h global.h
 
-main.o: main.c global.h
-	gcc -c main.c global.h
+fattree.o: fattree.c fattree.h global.h
+	gcc -c fattree.c fattree.h global.h
 
+escalonador.o: escalonador.c escalonador.h global.h
+	gcc -c escalonador.c escalonador.h global.h
+
+shutdown: shutdown.c
+	gcc -o shutdown shutdown.c 
+
+executa_postergado: executa_postergado.c 
+	gcc -o executa_postergado executa_postergado.c 
 
 clean:
-	rm -rf *.o *~ main
+	rm -rf *.o *~ escalonador shutdown executa_postergado

@@ -7,6 +7,6 @@
 int main(int argc, char const *argv[])
 {
 	printf("HELLO WORD!!\n");
-	sleep(2);
+	sleep(5);
 	return 0;
 }
