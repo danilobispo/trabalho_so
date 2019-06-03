@@ -64,6 +64,8 @@ int main(){
 	int recebeu=0;
 	char executavel[TAM_MSG+20];
 	time_t timer;
+	int job;
+    char nome[TAM_MSG];
 	//struct filho filhos[N];
 	tabela_processos proprio;
 	tabela_processos filhos[N+1];
@@ -92,7 +94,7 @@ int main(){
 	while(1){
 
 		if(msgrcv(idfila_esc, &mensagem_rec, sizeof(mensagem_rec), 1, IPC_NOWAIT)<0){
-			perror("\nErro no no 1");
+			//perror("\nErro no no 1");
 			fflush(stdout);
 		}else{
 
@@ -100,6 +102,8 @@ int main(){
 		}
 	}
 
+	job = mensagem_rec.pid;
+	strcpy(nome,mensagem_rec.mtext);
 	strcpy(mensagem_env.prog, mensagem_rec.prog);
 	strcpy(mensagem_env.mtext, mensagem_rec.mtext);
 
@@ -117,7 +121,7 @@ int main(){
 	}
 
 	strcpy(executavel,mensagem_env.mtext);
-	printf("\n[HIPER]CAMINHO = %s\n", executavel);
+	//printf("\n[HIPER]CAMINHO = %s\n", executavel);
 	fflush(stdout);
 
 //	strcat(executavel, mensagem_env.prog);
@@ -128,7 +132,7 @@ int main(){
 	if(pid==0){
 		execl(executavel, "a", NULL);
 		//execl("./a.out", "a", NULL);
-      		perror("execl() failure!\n\n");
+      		//perror("execl() failure!\n\n");
 
 	}else{
 		wait(&estado);
@@ -147,39 +151,40 @@ int main(){
   		mensagem_env.time_ini=tabela[0].time_ini;
   		mensagem_env.time_end=tabela[0].time_end;
  		mensagem_env.mtype=TYPE_ESC;
-		printf("[HIPER]mtype MENSAGEM = %d", mensagem_env.mtype);
-		fflush(stdout);
-   		printf("\nno %d levou: %lu  -  %lu", i, tabela[i].time_end, (tabela[0].time_end - tabela[0].time_ini));
+		//printf("[HIPER]mtype MENSAGEM = %d", mensagem_env.mtype);
+		//fflush(stdout);
+   		//printf("\nno %d levou: %lu  -  %lu", i, tabela[i].time_end, (tabela[0].time_end - tabela[0].time_ini));
 		msgsnd(idfila_esc, &mensagem_env, sizeof(mensagem_env)-sizeof(long), 0);
 		for(i=0; i<=N; i++){
-			printf("\nno %d levou: %lu  -  %lu", i, tabela[i].time_end, (tabela[i].time_end - tabela[i].time_ini));
+			//printf("\nno %d levou: %lu  -  %lu", i, tabela[i].time_end, (tabela[i].time_end - tabela[i].time_ini));
 			mensagem_env.time_ini=tabela[i].time_ini;
 			mensagem_env.time_end=tabela[i].time_end;
    			msgsnd(idfila_esc, &mensagem_env, sizeof(mensagem_env)-sizeof(long), 0);
 			
  		}
-		printf("\n");
+		//printf("\n");
 
+		printf("Job = %d, Programa = %s, ", job, nome);
 		makespan(&tabela);
 
 		/*printf("[HIPER]ID FILA = %d", idfila_esc);
 		fflush(stdout);*/
 
-		sleep(12);
+		sleep(15);
 		if(msgctl(idfila, IPC_RMID, &mensagem_env) != 0)
 			printf("erro na exclusao mensagem_env\n");
-		else
-			printf("-----tudo certo na exclusao mensagem_env\n");
+		//else
+			//printf("-----tudo certo na exclusao mensagem_env\n");
 
 		if(msgctl(idfila_volta, IPC_RMID, &mensagem_env) != 0)
 			printf("erro na exclusao mensagem_env\n");
-		else
-			printf("-----tudo certo na exclusao mensagem_env\n");
+		//else
+			//printf("-----tudo certo na exclusao mensagem_env\n");
 		
 		if(msgctl(idfila_esc, IPC_RMID, &mensagem_env) != 0)
 			printf("erro na exclusao mensagem_env\n");
-		else
-			printf("-----tudo certo na exclusao mensagem_env\n");
+		//else
+			//printf("-----tudo certo na exclusao mensagem_env\n");
 		/*i=0;
 		while(i<15){
 			if(wait(&estado)>0){
@@ -418,12 +423,12 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 		//aqui o mtype é o numero de si mesmo, que é multiplicado por 10 a cada nível
 		mensagem_env->mtype=15;
    		if(msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0)<0){
-			  	perror("erro no send 15!!!!!!!!!!!!-------------");
+			  /*perror("erro no send 15!!!!!!!!!!!!-------------");
 				printf("no erro no 15\n");
-				fflush(stdout);
+				fflush(stdout);*/
 		   }else{
-			   	printf("no 15 se mandou para cima\n");
-				fflush(stdout);
+			   	//printf("no 15 se mandou para cima\n");
+				//fflush(stdout);
 		   }
 		
 	}
@@ -434,12 +439,12 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 		mensagem_env->mtype=7;
    		msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 		    if(msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0)<0){
-			  	perror("erro no send 15!!!!!!!!!!!!-------------");
+			  	/*perror("erro no send 15!!!!!!!!!!!!-------------");
 				printf("no erro no 15\n");
-				fflush(stdout);
+				fflush(stdout);*/
 		   }else{
-			   	printf("no 15 se mandou para cima\n");
-				fflush(stdout);
+			   	//printf("no 15 se mandou para cima\n");
+				//fflush(stdout);
 		   }
 		//no 7 diz quantos nós vai receber
 		recebeu_volta=1;
@@ -447,15 +452,15 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 			//no 7 tá esperando nó 15
 			sleep(1);
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 15, IPC_NOWAIT)<0){
-				perror("Erro no no 7 retorno");
+				//perror("Erro no no 7 retorno");
 			}else{
 				strcpy(mensagem_env->mtext, mensagem_rec->mtext);
 				mensagem_env->time_ini=mensagem_rec->time_ini;
 				mensagem_env->time_end=mensagem_rec->time_end;
 				mensagem_env->mtype=(15*10);
    				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
-				printf("7 mandou 15 para cima\n");
-				fflush(stdout);
+				//printf("7 mandou 15 para cima\n");
+				//fflush(stdout);
 				i++;
 			}
 		}
@@ -490,7 +495,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 				mensagem_env->time_end=mensagem_rec->time_end;
    				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
-				printf("no 3 mandou 11 pra cima\n");
+				//printf("no 3 mandou 11 pra cima\n");
 			}
 			//no 3 tá esperando nó 7
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 7, IPC_NOWAIT)<0){
@@ -501,7 +506,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 				mensagem_env->time_end=mensagem_rec->time_end;
    				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
-				printf("no 3 mandou 7 pra cima\n");
+				//printf("no 3 mandou 7 pra cima\n");
 			}
 			//no 3 tá esperando nó 15(*10)
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 150, IPC_NOWAIT)<0){
@@ -512,7 +517,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 				mensagem_env->time_end=mensagem_rec->time_end;
    				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
-				printf("no 3 mandou 15(*10) pra cima\n");
+				//printf("no 3 mandou 15(*10) pra cima\n");
 			}
 		}
 
@@ -705,7 +710,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 				mensagem_env->time_end=mensagem_rec->time_end;
    				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
-				printf("no 1 mandou 5 pra cima\n");
+				//printf("no 1 mandou 5 pra cima\n");
 			}
 			//no 1 tá esperando nó 9
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 9, IPC_NOWAIT)<0){
@@ -716,7 +721,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 				mensagem_env->time_end=mensagem_rec->time_end;
    				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
-				printf("no 1 mandou 9 pra cima\n");
+				//printf("no 1 mandou 9 pra cima\n");
 			}
 			//no 1 tá esperando nó 13(*10)
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 130, IPC_NOWAIT)<0){
@@ -727,7 +732,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 				mensagem_env->time_end=mensagem_rec->time_end;
    				msgsnd(idfila, mensagem_env, sizeof(*mensagem_env)-sizeof(long), 0);
 				i++;
-				printf("no 1 mandou 13(*100) pra cima\n");
+				//printf("no 1 mandou 13(*100) pra cima\n");
 			}
 		}
 
@@ -771,12 +776,10 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 		//aqui o mtype é o numero de si mesmo, que é multiplicado por 10 a cada nível
 		mensagem_env->mtype=8;
    		if(msgsnd(idfila, mensagem_env, sizeof(*mensagem_env), 0)<0){
-			perror("no 8 deu erro\n");
-			fflush(stdout);
+		//	perror("no 8 deu erro\n");
+		//	fflush(stdout);
 		}else
 		{
-			printf("no 8 se mandou pra cima\n");
-			fflush(stdout);
 			sleep(4);
 		}
 		
@@ -794,7 +797,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[15].time_ini=mensagem_rec->time_ini;
   				tabela[15].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 15: %lu, text: %s, time_ini: %lu, time_end: %lu\n", tabela[15].time_ini, mensagem_rec->mtext, mensagem_rec->time_ini, mensagem_rec->time_end);
+				//printf("no 0, time_ini 15: %lu, text: %s, time_ini: %lu, time_end: %lu\n", tabela[15].time_ini, mensagem_rec->mtext, mensagem_rec->time_ini, mensagem_rec->time_end);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 700, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (7)");
@@ -802,7 +805,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[7].time_ini=mensagem_rec->time_ini;
   				tabela[7].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 7: %lu\n", tabela[7].time_ini);
+				//printf("no 0, time_ini 7: %lu\n", tabela[7].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 1100, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (11)");
@@ -810,7 +813,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[11].time_ini=mensagem_rec->time_ini;
   				tabela[11].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 11: %lu\n", tabela[11].time_ini);
+				//printf("no 0, time_ini 11: %lu\n", tabela[11].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 1300, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (13)");
@@ -818,7 +821,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[13].time_ini=mensagem_rec->time_ini;
   				tabela[13].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 13: %lu\n", tabela[13].time_ini);
+				//printf("no 0, time_ini 13: %lu\n", tabela[13].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 1400, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (14)");
@@ -826,7 +829,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[14].time_ini=mensagem_rec->time_ini;
   				tabela[14].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 14: %lu\n", tabela[14].time_ini);
+				//printf("no 0, time_ini 14: %lu\n", tabela[14].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 30, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (3)");
@@ -834,7 +837,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[3].time_ini=mensagem_rec->time_ini;
   				tabela[3].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 3: %lu\n", tabela[3].time_ini);
+				//printf("no 0, time_ini 3: %lu\n", tabela[3].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 50, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (5)");
@@ -842,7 +845,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[5].time_ini=mensagem_rec->time_ini;
   				tabela[5].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 5: %lu\n", tabela[5].time_ini);
+				//printf("no 0, time_ini 5: %lu\n", tabela[5].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 60, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (6)");
@@ -850,7 +853,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[6].time_ini=mensagem_rec->time_ini;
   				tabela[6].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 6: %lu\n", tabela[6].time_ini);
+				//printf("no 0, time_ini 6: %lu\n", tabela[6].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 90, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (9)");
@@ -858,7 +861,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[9].time_ini=mensagem_rec->time_ini;
   				tabela[9].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 9: %lu\n", tabela[9].time_ini);
+				//printf("no 0, time_ini 9: %lu\n", tabela[9].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 100, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (10)");
@@ -866,7 +869,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[10].time_ini=mensagem_rec->time_ini;
   				tabela[10].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 10: %lu\n", tabela[10].time_ini);
+				//printf("no 0, time_ini 10: %lu\n", tabela[10].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 120, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (12)");
@@ -874,7 +877,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[12].time_ini=mensagem_rec->time_ini;
   				tabela[12].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 12: %lu\n", tabela[12].time_ini);
+				//printf("no 0, time_ini 12: %lu\n", tabela[12].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 1, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (1)");
@@ -882,7 +885,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[1].time_ini=mensagem_rec->time_ini;
   				tabela[1].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 1: %lu\n", tabela[1].time_ini);
+				//printf("no 0, time_ini 1: %lu\n", tabela[1].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 2, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (2)");
@@ -890,7 +893,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[2].time_ini=mensagem_rec->time_ini;
   				tabela[2].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 2: %lu\n", tabela[2].time_ini);
+				//printf("no 0, time_ini 2: %lu\n", tabela[2].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 4, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (4)");
@@ -898,7 +901,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[4].time_ini=mensagem_rec->time_ini;
   				tabela[4].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 4: %lu\n", tabela[4].time_ini);
+				//printf("no 0, time_ini 4: %lu\n", tabela[4].time_ini);
 			}			
 			if(msgrcv(idfila, mensagem_rec, sizeof(*mensagem_rec), 8, IPC_NOWAIT)<0){
 				//perror("Erro no no 0 retorno (8)");
@@ -906,7 +909,7 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
   				tabela[8].time_ini=mensagem_rec->time_ini;
   				tabela[8].time_end=mensagem_rec->time_end;
 				i++;
-				printf("no 0, time_ini 8: %lu\n", tabela[8].time_ini);
+				//printf("no 0, time_ini 8: %lu\n", tabela[8].time_ini);
 			}
 		}
 
