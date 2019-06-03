@@ -39,4 +39,11 @@ void the_end(int sig);
 void exclui_fila_mensagem(int id_da_fila);
 
 
+
+
+
+void inicializaTorus(void);
+void cria_fila_mensagem_torus(void);
+
+
 #endif

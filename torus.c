@@ -3,21 +3,20 @@
 //
 
 #include "torus.h"
-#include "global.h"
 
-int main()
-{
-    printf("Topologia Torus selecionada\n");
-    inicializaTorus();
+// int main()
+// {
+//     printf("Topologia Torus selecionada\n");
+//     inicializaTorus();
 
-    /*
-    * funcao que cria os processos
-    */
-    criaProcessosTorus();
-    aciona_execucao_prog("./a.out", "a");
-    while (1);
-    return 0; 
-}
+//     /*
+//     * funcao que cria os processos
+//     */
+//     criaProcessosTorus();
+//     aciona_execucao_prog("./a.out", "a");
+//     while (1);
+//     return 0; 
+// }
 
 /**
 	Verifica se vizinho a ser adicionado ja nao existe no vetor de vizinhos daquele no
@@ -239,14 +238,14 @@ void criaProcessosTorus()
 }
 
 /**
- * Nos filhos(0 a 15) recebem a mensagem de execucao e executam o programa em trata_mensagem
+ * Nos filhos(0 a 15) recebem a mensagem de execucao e executam o programa em trata_mensagem_torus
  * */
 void executaProgramaNosTorus(){
     mensagem msg;
     int valor;
     int i = 0;
     while(1){
-        if (msgrcv(msgid, &msg, sizeof(msg), no_ref, IPC_NOWAIT) < 0) {
+        if (msgrcv(msgid_fila_topologia, &msg, sizeof(msg), no_ref, IPC_NOWAIT) < 0) {
             // printf("noRef receive executa: %d\n", no_ref);
 	   		// perror("[TRANSMITE]Erro na recepcao da mensagem executa programa\n");
 
@@ -262,20 +261,20 @@ void executaProgramaNosTorus(){
                     }
                 }
                 tempos[0] = clock();
-		    	trata_mensagem(msg.mtext, msg.prog);
+		    	trata_mensagem_torus(msg.mtext, msg.prog);
 		    	tempos[1] = clock();
                 fflush(stdout);
-                fim_programa(tempos[0], tempos[1]);
+                fim_programa_torus(tempos[0], tempos[1]);
             }
             // Se o no de destino for o mesmo mtype
             // Então eh pra executar
             if(msg.mtype == msg.no_dest && msg.mtype != TYPE_FIN){ 
                 printf("Executarei | mtype: %ld\n", msg.mtype);
                 tempos[0] = clock();
-		    	trata_mensagem(msg.mtext, msg.prog);
+		    	trata_mensagem_torus(msg.mtext, msg.prog);
 		    	tempos[1] = clock();
                 fflush(stdout);
-                fim_programa(tempos[0], tempos[1]);                
+                fim_programa_torus(tempos[0], tempos[1]);                
             }
         }
     }
@@ -295,7 +294,7 @@ void inicializaTorus()
     pid_principal = getpid();
 
     /*cria a fila de mensagem para comunicacao*/
-    cria_fila_mensagem();
+    cria_fila_mensagem_torus();
 }
 
 int calculaCaminho(mensagem msg, int no_dest, int no_orig)
@@ -339,7 +338,7 @@ int calculaCaminho(mensagem msg, int no_dest, int no_orig)
                 msg.no_source = no_ref + 1;
                 msg.no_dest = destino + 1;
                 msg.mtype = no_ref + (4 + 1);
-                if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0){
+                if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0){
 
                 } else {
                     // printf("Mensagem(origem: %d, destino:%d) ENVIADA COM SUCESSO\n",  no_ref, no_ref + 4);
@@ -348,7 +347,7 @@ int calculaCaminho(mensagem msg, int no_dest, int no_orig)
                 msg.no_source = no_ref + (4 + 1);
                 msg.no_dest = destino + 1;
                 msg.mtype = destino + 1;
-                if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0){
+                if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0){
 
                 } else {
                     // printf("Mensagem(origem: %d, destino:%d) ENVIADA COM SUCESSO\n",  no_ref + 4, destino);
@@ -367,7 +366,7 @@ int calculaCaminho(mensagem msg, int no_dest, int no_orig)
                 msg.no_source = no_ref + 1;
                 msg.no_dest = destino + 1;
                 msg.mtype = no_ref - (4 + 1);
-                if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0){
+                if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0){
 
                 } else {
                     // printf("Mensagem(origem: %d, destino:%d) ENVIADA COM SUCESSO\n",  no_ref, no_ref - 4);
@@ -376,7 +375,7 @@ int calculaCaminho(mensagem msg, int no_dest, int no_orig)
                 msg.no_source = no_ref + (4 + 1);
                 msg.no_dest = destino + 1;
                 msg.mtype = destino + 1;
-                if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0){
+                if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0){
 
                 } else {
                     // printf("Mensagem(origem: %d, destino:%d) ENVIADA COM SUCESSO\n", no_ref - 4, destino);
@@ -408,7 +407,7 @@ int calculaCaminho(mensagem msg, int no_dest, int no_orig)
     msg.no_dest = destino + 1;
     msg.mtype = destino + 1;
     // printf("Manda mensagem(origem: %d, destino:%d)\n", no_ref, melhorVizinho);
-    if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0){
+    if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0){
 
     } else {
         // printf("Mensagem(origem: %d, destino:%d) ENVIADA COM SUCESSO\n", no_ref, melhorVizinho);
@@ -439,9 +438,9 @@ int isVizinho(int no_ref, int no)
  * Cria um fork para realizar a execução do programa enviado por mensagem
  * */
 
-void trata_mensagem(char *caminho_prog, char *programa)
+void trata_mensagem_torus(char *caminho_prog, char *programa)
 {
-    printf("trata_mensagem!!\n");
+    printf("trata_mensagem_torus!!\n");
 	pid_t pid_exec;
 	int status;
 
@@ -468,7 +467,7 @@ void trata_mensagem(char *caminho_prog, char *programa)
  * a recepcao da mensagem tambem ocorre nesse metodo, onde todos os nos
  * encerram sua execucao e retornam o makespan de todos os nos para o no 0
  * */
-void fim_programa(unsigned long time_ini, unsigned long time_end)
+void fim_programa_torus(unsigned long time_ini, unsigned long time_end)
 {
 	mensagem msg;
 	int contador_roteamento = 0;
@@ -485,24 +484,39 @@ void fim_programa(unsigned long time_ini, unsigned long time_end)
 	msg.time_end = time_end;
 	(void) strcpy(msg.mtext,"no terminou exec") ;
 	
-	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+	if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 	   perror("[CRIANDO]Erro no envio da mensagem") ;
 	}
 
 
 	while(1)
 	{
-		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, no_ref, IPC_NOWAIT) < 0) {
+		if (msgrcv(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, no_ref, IPC_NOWAIT) < 0) {
 	   		// perror("[TRANSMITE]Erro na recepcao da mensagem fim programa") ;
 		}
 		else
 		{
             fflush(stdout);
 			if (msg.operacao == TYPE_FIN){
-                printf("type_fin msgrcv mtype: %ld\n", msg.mtype);
+                if(msg.mtype == TYPE_NO_1 && msg.no_dest == TYPE_NO_1){
+                msg.mtype = TYPE_ESC;
+                    if(msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0){
+                        printf("Não mandei mensagem");
+                        fflush(stdout);
+                    } else {
+                        printf("Mandei mensagem | msgid_fila_topologia: %d", msgid_fila_topologia);
+                    }
+                }
                 for(i; i > 0; i--){
                     while(valor != TYPE_NO_1){
                         valor = calculaCaminho(msg, TYPE_NO_1, i+1);
+                        if(valor == TYPE_NO_1){
+                            msg.mtype = TYPE_ESC;
+                            if(msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0){} 
+                            else {
+                                printf("Mandei mensagem | msgid_fila_topologia: %d", msgid_fila_topologia);
+                            }
+                        }
                     }
                 }
 			}
@@ -515,59 +529,59 @@ void fim_programa(unsigned long time_ini, unsigned long time_end)
  * atraves do roteamento implementado para a topologia, marca todos os processos
  * como ocupados na tabela de processos
  * */
-void ordem_executa_programa(char *caminho_prog, char *programa)
-{
-	mensagem msg;
-    printf("ORDEM EXECUTA \n");
-    fflush(stdout);
-    /*
-	* enviado para o escalonador dados do processo
-	* notificando que já foi criado e está livre
-	*/
-	msg.mtype  = TYPE_NO_1; //coloca type_no_0 quando quer enviar para o escalonador
-	msg.pid = pid_principal;
-	msg.no_source = TYPE_ESC; /*TYPE_NO_eu*/
-	msg.no_dest = TYPE_ALL;
-	msg.livre = false;
-	msg.operacao = TYPE_EXEC;
-	(void) strcpy(msg.mtext,caminho_prog) ;
-	(void) strcpy(msg.prog,programa) ;
+// void ordem_executa_programa(char *caminho_prog, char *programa)
+// {
+// 	mensagem msg;
+//     printf("ORDEM EXECUTA \n");
+//     fflush(stdout);
+//     /*
+// 	* enviado para o escalonador dados do processo
+// 	* notificando que já foi criado e está livre
+// 	*/
+// 	msg.mtype  = TYPE_NO_1; //coloca type_no_0 quando quer enviar para o escalonador
+// 	msg.pid = pid_principal;
+// 	msg.no_source = TYPE_ESC; /*TYPE_NO_eu*/
+// 	msg.no_dest = TYPE_ALL;
+// 	msg.livre = false;
+// 	msg.operacao = TYPE_EXEC;
+// 	(void) strcpy(msg.mtext,caminho_prog) ;
+// 	(void) strcpy(msg.prog,programa) ;
 
-	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
-	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
-	}
-    else{
-        printf("Escalonador enviei mensagem\n");
-    }
+// 	if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0) {
+// 	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
+// 	}
+//     else{
+//         printf("Escalonador enviei mensagem\n");
+//     }
 
 
-	for (int i = 0; i < n_nos_topologia; ++i)
-	{
-		tab_proc[i].livre = 0;
-	}
+// 	for (int i = 0; i < n_nos_topologia; ++i)
+// 	{
+// 		tab_proc[i].livre = 0;
+// 	}
 
-}
+// }
 
 /**
  * Essa funcao verifica se todos os nos estao livres, caso sim, ele realiza a
  * comunicacao de execucao entre todos os nos, apos isso espera a resposta para
  * enviar os tempos de 
  * */
-void aciona_execucao_prog(char *caminho_prog, char *programa)
-{
-	printf("VOU EXECUTAR\n");
-	if (isNosLivresTorus())
-	{
-		printf("EXECUTANDO...\n");
-		ordem_executa_programa(caminho_prog, programa);
+// void aciona_execucao_prog(char *caminho_prog, char *programa)
+// {
+// 	printf("VOU EXECUTAR\n");
+// 	if (isNosLivresTorus())
+// 	{
+// 		printf("EXECUTANDO...\n");
+// 		ordem_executa_programa(caminho_prog, programa);
 
-		espera_resultado_execucao();
-	}
-	else
-	{
-		printf("Não posso executar. Nem todos os processos estão livres!\n");
-	}
-}
+// 		espera_resultado_execucao();
+// 	}
+// 	else
+// 	{
+// 		printf("Não posso executar. Nem todos os processos estão livres!\n");
+// 	}
+// }
 
 int isNosLivresTorus(){
     for (int i = 0; i < n_nos_topologia; ++i)
@@ -581,44 +595,108 @@ int isNosLivresTorus(){
 	return 1;
 }
 
-void espera_resultado_execucao(void)
-{
-	int contador_no_ref = 0;
-	int index;
-	mensagem msg;
+// void espera_resultado_execucao(void)
+// {
+// 	int contador_no_ref = 0;
+// 	int index;
+// 	mensagem msg;
 
-	while(contador_no_ref < n_nos_topologia)
-	{
-		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_ESC, IPC_NOWAIT) < 0) {
-		//    perror("[ESCALONADOR]Erro na recepcao da mensagem espera_resultado_execucao") ;
-		}
-		else
-		{
-			if (msg.operacao == TYPE_FIN)
-			{
-				index = search_proc(msg.pid, 2);
+// 	while(contador_no_ref < n_nos_topologia)
+// 	{
+// 		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, TYPE_ESC, IPC_NOWAIT) < 0) {
+// 		//    perror("[ESCALONADOR]Erro na recepcao da mensagem espera_resultado_execucao") ;
+// 		}
+// 		else
+// 		{
+// 			if (msg.operacao == TYPE_FIN)
+// 			{
+// 				index = search_proc(msg.pid, 2);
 
-				if (index != -1)
-				{
-					printf("[ESCALONADOR]PROCESSO %d finalizou | %lu -> %lu\n", tab_proc[index].no_ref, msg.time_ini, msg.time_end);
-                    fflush(stdout);
-					marca_gerente_livre(msg.pid, msg.time_ini, msg.time_end);
+// 				if (index != -1)
+// 				{
+// 					printf("[ESCALONADOR]PROCESSO %d finalizou | %lu -> %lu\n", tab_proc[index].no_ref, msg.time_ini, msg.time_end);
+//                     fflush(stdout);
+// 					marca_gerente_livre(msg.pid, msg.time_ini, msg.time_end);
 
-					contador_no_ref++;
-				}
-			}
-		}
-	}
-}
+// 					contador_no_ref++;
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
 //Copia de cria_fila_mensagem
 //TODO: Remover apos terminar topologia e juntar com a main
-void cria_fila_mensagem(void)
+// void cria_fila_mensagem(void)
+// {
+//     mensagem msg;
+//     key_fila_msg = KEY;
+
+//     if ((msgid = msgget(key_fila_msg, IPC_CREAT | 0666)) == -1)
+//     {
+//         perror("Erro de msgget");
+//     }
+//     else
+//     {
+//         //avisa ao processo shutdown o pid do escalonador
+//         msg.mtype = TYPE_SHUTDOWN;
+//         msg.pid = pid_principal;
+//         msg.no_source = pid_principal; /*TYPE_NO_eu*/
+//         msg.no_dest = 0;
+//         msg.operacao = 0;
+//         (void)strcpy(msg.mtext, "pid escalonador");
+
+//         if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0)
+//         {
+//             perror("[ESCALONADOR]Erro no envio da mensagem");
+//         }
+//         ////////
+//     }
+// }
+
+// int search_proc(int ref, int option)
+// {
+// 	for (int i = 0; i < n_nos_topologia; ++i)
+// 	{
+// 		if (option == 1)
+// 		{
+// 			if (tab_proc[i].no_ref == ref)
+// 			{
+// 				return i;
+// 			}
+// 		}
+// 		else if(option == 2)
+// 		{
+// 			if (tab_proc[i].pid == ref)
+// 			{
+// 				return i;
+// 			}
+
+// 		}
+// 	}
+
+// 	return -1;
+// }
+
+// void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end)
+// {
+// 	for (int i = 0; i < n_nos_topologia; ++i)
+// 	{
+// 		if (tab_proc[i].pid == ref)
+// 		{
+// 			tab_proc[i].livre = 1;
+// 			tab_proc[i].time_ini = time_ini;
+// 			tab_proc[i].time_end = time_end;
+// 		}
+// 	}
+// }
+
+void cria_fila_mensagem_torus(void)
 {
     mensagem msg;
-    key_fila_msg = KEY;
+    key_fila_msg = KEY_TORUS;
 
-    if ((msgid = msgget(key_fila_msg, IPC_CREAT | 0666)) == -1)
+    if ((msgid_fila_topologia = msgget(key_fila_msg, IPC_CREAT | 0666)) == -1)
     {
         perror("Erro de msgget");
     }
@@ -632,48 +710,10 @@ void cria_fila_mensagem(void)
         msg.operacao = 0;
         (void)strcpy(msg.mtext, "pid escalonador");
 
-        if (msgsnd(msgid, &msg, TAM_TOTAL_MSG, 0) < 0)
+        if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0)
         {
             perror("[ESCALONADOR]Erro no envio da mensagem");
         }
         ////////
     }
 }
-
-int search_proc(int ref, int option)
-{
-	for (int i = 0; i < n_nos_topologia; ++i)
-	{
-		if (option == 1)
-		{
-			if (tab_proc[i].no_ref == ref)
-			{
-				return i;
-			}
-		}
-		else if(option == 2)
-		{
-			if (tab_proc[i].pid == ref)
-			{
-				return i;
-			}
-
-		}
-	}
-
-	return -1;
-}
-
-void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end)
-{
-	for (int i = 0; i < n_nos_topologia; ++i)
-	{
-		if (tab_proc[i].pid == ref)
-		{
-			tab_proc[i].livre = 1;
-			tab_proc[i].time_ini = time_ini;
-			tab_proc[i].time_end = time_end;
-		}
-	}
-}
-

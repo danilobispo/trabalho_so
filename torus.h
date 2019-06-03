@@ -45,7 +45,7 @@ static NO_TORUS noTorus[n_nos_topologia];
 int pid;
 int no_ref;
 int contador_rcv;
-int msgid;
+int msgid_fila_topologia;
 
 time_t timer_inicio;
 time_t timer_final;
@@ -67,15 +67,14 @@ int isNosLivresTorus();
 void executaProgramaNosTorus();
 
 
-//Remover depois de juntar com a main
 void inicializaTorus();
-void cria_fila_mensagem();
-void trata_mensagem(char *caminho_prog, char *programa);
-void fim_programa(unsigned long time_ini, unsigned long time_end);
-void aciona_execucao_prog(char *caminho_prog, char *programa);
-void ordem_executa_programa(char *caminho_prog, char *programa);
+void cria_fila_mensagem_torus();
+void trata_mensagem_torus(char *caminho_prog, char *programa);
+void fim_programa_torus(unsigned long time_ini, unsigned long time_end);
+//void aciona_execucao_prog(char *caminho_prog, char *programa);
+//void ordem_executa_programa(char *caminho_prog, char *programa);
 
 int search_proc(int ref, int option);
-void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end);
+//void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end);
 
 

@@ -35,21 +35,27 @@ typedef struct
 
 int main(int argc, char const *argv[])
 {
+	printf("\nentrou na função");
 	int msgid;
 	mensagem msg;
 
   	/*  recuperacao do id da fila de mensagens do servidor       */
 	if ((msgid = msgget(KEY_ESC_SHUT,0)) == -1) {
-	      perror("Erro na criacao da fila do servidor") ;
+	      perror("Erro na criacao da fila do servidor");
 	      // exit(1) ;
 	}
 	else
 	{
+		printf("msgid: %d", msgid);
 		if (msgrcv(msgid, &msg, TAM_TOTAL_MSG, 23, IPC_NOWAIT) < 0) {
 		   // perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
 		}
 		else
 		{
+			fflush(stdout);
+			printf("mandei kill|msg.pid:%d", msg.pid);
+			fflush(stdout);
+
 			kill(msg.pid, SIGUSR1); 
 		}
 	}

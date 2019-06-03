@@ -1,5 +1,6 @@
 #include "escalonador.h"
 #include "fattree.h"
+#include "torus.h"
 
 
 int main(int argc, char const *argv[])
@@ -76,6 +77,7 @@ void cria_fila_shutdown(void)
 {
 	mensagem msg;
     key_fila_msg = KEY_ESC_SHUT;
+	pid_principal = getpid();
 
 	if (( msgid_shutdown = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
 	     perror("Erro de msgget") ;
@@ -183,9 +185,9 @@ void espera_execucao_job (void){
 
 
 	//caso seja a hora certa manda executar o programa
-	if (temp_agora == tab_job[menor_job].tempo_futuro){
+	if (temp_agora == tab_job[menor_job].tempo_futuro || temp_agora >= tab_job[menor_job].tempo_futuro){
 
-		if(!programa_executado)
+		if(tab_job[menor_job].executado == 0 && tab_job[0].jobs == 0)
 		{
 			tab_job[menor_job].executado = 1;
 			menor_delay = 10000;
@@ -232,11 +234,23 @@ void espera_execucao_job (void){
 			}
 			else
 			{
+				for (int i = 0; i < 16; ++i)
+				{
+					tab_proc[i].livre = 1;
+				}
+
+				//TORUS
+				//organiza as infos da fila de acordo com cada topologia
+				//se precisar cria, ou salva o id da fila
+				infos_fila_msg();
+
 				//envia mensagem para a fila para executar o programa
-				//aciona_execucao_prog(tab_job[menor_job].nome_programa, "a", N_NOS_FATTREE);
+				aciona_execucao_prog(tab_job[menor_job].nome_programa, "a", N_NOS_CUBO_TORUS);
+
 			}
 		}
 	}
+	busc_prox_prog();
 }
 
 
@@ -276,6 +290,15 @@ void start_hyper_cubo(void)
 void start_torus(void)
 {
 	//cria a topologia com a chamada de codigo do danilo
+
+	inicializaTorus();
+
+    /*
+    * funcao que cria os processos
+    */
+    criaProcessosTorus();
+
+
 }
 
 void start_fat_tree(void)
@@ -379,6 +402,10 @@ void infos_fila_msg(void)
 	}
 	else if (topologia == 'T')
 	{
+		/*  recuperacao do id da fila de mensagens da topologia hypercubo      */
+		if ((msgid_fila_topologia = msgget(KEY_TORUS,0)) == -1) {
+			perror("Erro na criacao da fila do torus") ;
+		}
 
 	}
 	else if (topologia == 'F')
@@ -407,10 +434,13 @@ int is_todos_livres(int n_nos)
 
 void aciona_execucao_prog(char *caminho_prog, char *programa, int n_nos)
 {
+	printf("VOU EXECUTAR");
+	fflush(stdout);
 	if (is_todos_livres(n_nos))
 	{
 		ordem_executa_programa(caminho_prog, programa, n_nos);
-		
+		printf("------>>>Saiu do ordem executa");
+		fflush(stdout);
 		espera_resultado_execucao(n_nos);
 	}
 	else
@@ -430,29 +460,39 @@ void espera_resultado_execucao(int n_nos)
 	int index;
 	mensagem msg;
 
+	printf("[ESCALONADOR]Esperando o resultado | %d msg_fila_top: %d", n_nos, msgid_fila_topologia);
+	fflush(stdout);
+
 	while(contador_no_ref < n_nos)
 	{
+			// printf("[ESCALONADOR]Esperando o resultado");
+			// fflush(stdout);
 		if (msgrcv(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, TYPE_ESC, IPC_NOWAIT) < 0) {
-		    //perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
+		    // perror("[ESCALONADOR]Erro na recepcao da mensagem") ;
 		}
 		else
 		{
 			// if (msg.operacao == TYPE_FIN)
 			// {
-				index = search_proc(msg.pid, 2);
+				if (topologia == 'F'){
+					index = search_proc(msg.pid, 2);
 
-				if (index != -1)
-				{
-					printf("[ESCALONADOR]PROCESSO %d finalizou | %lu -> %lu\n", tab_proc[index].no_ref, msg.time_ini, msg.time_end);
-					marca_gerente_livre(msg.pid, msg.time_ini, msg.time_end, n_nos);
+					if (index != -1)
+					{
+						printf("[ESCALONADOR]PROCESSO %d finalizou | %lu -> %lu\n", tab_proc[index].no_ref, msg.time_ini, msg.time_end);
+						fflush(stdout);
+						marca_gerente_livre(msg.pid, msg.time_ini, msg.time_end, n_nos);
 
-					contador_no_ref++;
-				}
+						
+					}
+				} 
+				contador_no_ref++;
 			// }
 		}
 	}
-	tab_job[cont_job-1].makespan = maior_tempo_fim - menor_tempo_inicio;
-	printf("[ESCALONADOR]JOB %d | MAKESPAN %lu\n", cont_job-1, tab_job[cont_job-1].makespan);
+	tab_job[menor_job].makespan = maior_tempo_fim - menor_tempo_inicio;
+	printf("[ESCALONADOR]JOB %d | MAKESPAN %lu\n", menor_job, tab_job[menor_job].makespan);
+	fflush(stdout);
 }
 
 /*
@@ -512,7 +552,29 @@ void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end
 
 void the_end(int sig)
 {
+	int i,j,k,contador = cont_job-1;
 	printf("MATA TODO MUNDO!!\n");
+
+	printf ("\nOs processos executados são:\n");
+	for (j=0; j< cont_job; j++){
+		if (tab_job[j].executado == 1){
+			printf ("\nNome processo: %s",tab_job[j].nome_programa);
+			printf ("\nMakespan: %ld",tab_job[j].makespan);
+			printf ("\nNúmero ID: %d",tab_job[j].jobs);
+			printf ("\nTempo delay: %d\n",tab_job[j].tempo_delay);
+		}
+	}
+
+	printf ("\nOs processos não executados são:\n");
+	for (k=0; k< cont_job; k++){
+		if (tab_job[k].executado == 0){
+			printf ("\nNome processo: %s",tab_job[k].nome_programa);
+			printf ("\nMakespan: %ld",tab_job[k].makespan);
+			printf ("\nNúmero ID: %d",tab_job[k].jobs);
+			printf ("\nTempo delay: %d\n",tab_job[k].tempo_delay);
+		}
+	}
+
 
 	if (topologia == 'F')
 	{
@@ -520,7 +582,6 @@ void the_end(int sig)
 		{
 			kill(tab_proc[i].pid, SIGKILL);
 		}
-
 		exclui_fila_mensagem(msgid_fila_topologia);
 	}
 	else if	(topologia != 'H')
@@ -529,7 +590,6 @@ void the_end(int sig)
 		{
 			kill(tab_proc[i].pid, SIGKILL);
 		}
-
 		exclui_fila_mensagem(msgid_fila_topologia);
 	}
 	
@@ -539,7 +599,6 @@ void the_end(int sig)
 	//ATENCAO SOMENTE NO FINAL NAO ANTES
 	//SE NAO A TOPOLOGIA NAO FUNCIONARA MAIS
 	exclui_fila_mensagem(msgid_shutdown);
-
 	exclui_fila_mensagem(msgid_postergado);
 
 	exit(1);
@@ -561,3 +620,146 @@ void exclui_fila_mensagem(int id_da_fila)
 		printf("EXCLUI LISTA DE MENSAGEM\n");
 	}
 }
+
+
+// void inicializaTorus()
+// {
+//     //  Cria estrutura com a mensagem a ser repassada entre os nós
+//     mensagem msg;
+
+//     // Aqui os nos e seus vizinhos sao criados como estruturas de dados
+//     // sem forks ainda
+//     criaNosTorus();
+
+//     /*guarda o pid do escalonador*/
+//     pid_principal = getpid();
+
+//     /*cria a fila de mensagem para comunicacao*/
+//     cria_fila_mensagem_torus();
+// }
+
+
+
+
+/**
+	Inicializa os nos do torus
+	**/
+// void criaNosTorus()
+// {
+//     int i = 0;
+//     int j = 0;
+//     int m = 0;
+//     int n = 4;
+//     int fork0, fork1, fork2, fork3;
+//     int forkcircularvertical;
+//     int forkcircularhorizontal;
+
+//     // Visão abstrata dos processos, nenhum fork foi realizado por ora
+//     for (i; i < n_nos_topologia; i++)
+//     {
+//         noTorus[i].noId = i;
+//         noTorus[i].livre = 1; // A principio, todos os nos estao livres
+//         for (j = 0; j < 4; j++)
+//         {
+//             noTorus[i].vizinhos[j] = -1; // Vizinho invalido, quando a insercao for realizada
+//             // esse valor sera necessario para checar se eu nao estou sobrescrevendo nada
+//         }
+//     }
+
+//     // Zerando as variáveis para um novo loop:
+//     i = 0;
+//     j = 0;
+
+//     // Aqui adicionamos os vizinhos a todos os nós
+//     for (i = 0; i < n; i++)
+//     {
+//         //        DEBUG
+//         //        printf("Fila %d\n", i);
+//         for (j = 0; j < n; j++)
+//         {
+//             fork0 = m - 1; // Vizinho da esquerda
+//             fork1 = m + 1; // Vizinho da direita
+//             fork2 = m + 4; // Vizinho abaixo
+//             fork3 = m - 4; // Vizinho do topo
+//                            //            DEBUG
+//                            //            printf("Nó atual: %d\t", m);
+//             if (j != n - 1)
+//             {
+//                 //                printf("Vizinho direita: %d(%d+1)\n", fork1, m);
+//                 //adicionarVizinho(m, fork1);
+//                 informarVizinho(fork1, m);
+//             }
+//             if (i != n - 1)
+//             {
+//                 //                DEBUG
+//                 //                printf("Vizinho abaixo: %d(%d+4)\n", fork2, m);
+//                 adicionarVizinho(m, fork2);
+//                 informarVizinho(fork2, m);
+//             }
+
+//             if (i == 0)
+//             { // Primeira fila
+//                 forkcircularvertical = m + 12;
+//                 //                DEBUG
+//                 //                printf("Vizinho Circular Vertical: %d(%d+12)\n", forkcircularvertical, m);
+//                 adicionarVizinho(m, forkcircularvertical);
+//                 informarVizinho(forkcircularvertical, m);
+//             }
+//             if (j == 0)
+//             {
+//                 forkcircularhorizontal = m + 3;
+//                 //                DEBUG
+//                 //                printf("Vizinho Circular Horizontal: %d(%d+3)\n", forkcircularhorizontal, m);
+//                 adicionarVizinho(m, forkcircularhorizontal);
+//                 informarVizinho(forkcircularhorizontal, m);
+//             }
+
+//             if ((fork0) >= 0)
+//             {
+//                 //                DEBUG
+//                 //                printf("Vizinho esquerda: %d(%d-1)\n", fork0, m);
+//                 informarVizinho(fork0, m);
+//             }
+
+//             if ((fork3) >= 0)
+//             {
+//                 //                DEBUG
+//                 //                printf("Vizinho topo: %d(%d-4)\n", fork3, m);
+//                 informarVizinho(fork3, m);
+//             }
+//             m++;
+//         }
+//     }
+//     // End adicionar vizinhos
+// }
+
+
+
+//Copia de cria_fila_mensagem
+//TODO: Remover apos terminar topologia e juntar com a main
+// void cria_fila_mensagem_torus(void)
+// {
+//     mensagem msg;
+//     key_fila_msg = KEY_TORUS;
+
+//     if ((msgid_fila_topologia = msgget(key_fila_msg, IPC_CREAT | 0666)) == -1)
+//     {
+//         perror("Erro de msgget");
+//     }
+//     else
+//     {
+//         //avisa ao processo shutdown o pid do escalonador
+//         msg.mtype = TYPE_SHUTDOWN;
+//         msg.pid = pid_principal;
+//         msg.no_source = pid_principal; /*TYPE_NO_eu*/
+//         msg.no_dest = 0;
+//         msg.operacao = 0;
+//         (void)strcpy(msg.mtext, "pid escalonador");
+
+//         if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0)
+//         {
+//             perror("[ESCALONADOR]Erro no envio da mensagem");
+//         }
+//         ////////
+//     }
+// }

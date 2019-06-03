@@ -24,6 +24,7 @@
 //100(vetor)+20(vetor)+4(int)+1(bool)+4(int)+4(int)+4(int)+8(lu)+8(lu)
 #define TAM_TOTAL_MSG 153
 #define KEY_FAT_TREE 33647
+#define KEY_TORUS 14852
 #define N_NOS_FATTREE 15
 #define N_NOS_CUBO_TORUS 16
 
