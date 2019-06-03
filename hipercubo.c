@@ -3,7 +3,7 @@
 * Laís Mendes Gonçalves (110033647)
 * Guilherme de Oliveira Silva (110012496)
 * Danilo José Bispo Galvão (120114852)
-* 
+* Helena Schubert I. L. Silva (100012311)
 */
 #include <stdio.h> 
 #include <stdlib.h>
@@ -79,22 +79,22 @@ int main(){
 	mensagem mensagem_env, mensagem_rec;
 	mensagem tabela[N+1];
 	
-	//começa pelo pai, então é 0. Os demais terão que atualizar esse valor.
+	/*começa pelo pai, então é 0. Os demais terão que atualizar esse valor.*/
 	proprio.no_ref = 0;
 
-	//cria filas de mensagem para preencher o hipercubo
+	/*cria filas de mensagem para preencher o hipercubo*/
    	if ((idfila = msgget(100012311, IPC_CREAT|0x1B6)) < 0)
    	{
      		printf("erro na criacao da fila 1\n");
      		exit(1);
    	}   	
-	//cria fila de mensagens para retornar as mensagens ao no 0
+	/*cria fila de mensagens para retornar as mensagens ao no 0*/
 	if ((idfila_volta = msgget(100012312, IPC_CREAT|0x1B6)) < 0)
    	{
      		printf("erro na criacao da fila 2\n");
      		exit(1);
    	}   	
-	//cria fila de mensagem que se comunica com o escalonador
+	/*cria fila de mensagem que se comunica com o escalonador*/
 	if ((idfila_esc = msgget(100012313, IPC_CREAT|0x1B6)) < 0)
    	{
      		printf("erro na criacao da fila 3\n");
@@ -120,7 +120,7 @@ int main(){
 	//funcao que cria os processos filhos e os batiza segundo seus no_refs (numero indentificadcor de no)
 	cria_familia_hipercubo(filhos, &proprio, idfila, &mensagem_env,  &pid_pai);
 	
-	//cada no envia a mensagem aos nos a esse ligado, mas nao antes de 
+	/*cada no envia a mensagem aos nos a esse ligado, mas nao antes de recebe-la, obvio*/
 	i=0;
 	while(recebeu==0){
 		//só envia uma vez
@@ -136,7 +136,7 @@ int main(){
 	//printf("\n[HIPER]CAMINHO = %s\n", executavel);
 	fflush(stdout);
 
-//	strcat(executavel, mensagem_env.prog);
+	/*aqui ele vai dar um fork, e se for um pai, ele aguarda com o wait o processo que o filho executará*/
 	time(&timer);
 	pid=fork();
 	mensagem_env.time_ini = time(NULL);
@@ -153,7 +153,7 @@ int main(){
 	mensagem_env.time_end = time(NULL);
 	tabela[0].time_end=mensagem_env.time_end;
 
-
+	/*os nos fazem o caminho inverso até chegar no no zero, com o tempo que o processo deles levou*/
 	envia_reverso_mensagem_hipercubo(&proprio, &mensagem_env, &mensagem_rec, idfila_volta, &tabela);
 	
 	//printf("pid pai no if %ul\n",tabela[2].time_ini;
@@ -215,6 +215,7 @@ void cria_familia_hipercubo( tabela_processos *filho,  tabela_processos *proprio
 	int i;
 	pid_t pid;
 
+	/*quem for o pai, só guarda o filho. Quem for o filho, atualiza seu proprio.no_ref*/
 	for(i=0;i<N;i++){
 		if( (pid=fork())==0 ){
 			*pid_pai=0;
@@ -239,6 +240,7 @@ void cria_familia_hipercubo( tabela_processos *filho,  tabela_processos *proprio
 
 }
 
+/*cada um manda mensagem para seus filhos em primeiro grau/filhos diretos */
 void envia_mensagem_hipercubo( tabela_processos *proprio,  mensagem *mensagem_env, int idfila, int *enviou){
 		
 	if(proprio->no_ref==0){
@@ -310,6 +312,7 @@ void envia_mensagem_hipercubo( tabela_processos *proprio,  mensagem *mensagem_en
 
 }
 
+/* cada um recebe a mensagem que lhe foi enviada, exceto o zero, que não recebe, apenas atualiza seu estado */
 void recebe_mensagem_hipercubo( tabela_processos *proprio,  mensagem *mensagem_rec, int idfila, int *recebeu){
 
 	//printf("o que ha no proprio->ref de cada um: %d\n", proprio->no_ref);
@@ -424,6 +427,8 @@ void recebe_mensagem_hipercubo( tabela_processos *proprio,  mensagem *mensagem_r
 	}
 }
 
+/*cada no manda seu proprio estado para seu no pai (pai na estrutura do grafico, nao o processo pai). Cada nós deve 
+também mandar o que recebeu. Para mandar o que recebeu, multiplica o mtype recebido por 10, tornando o mtype unico*/
 void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *mensagem_env,  mensagem *mensagem_rec, int idfila,  mensagem *tabela){
 
 	int i=0;
