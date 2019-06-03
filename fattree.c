@@ -1,3 +1,10 @@
+/*
+* Grupo:
+* Laís Mendes Gonçalves (110033647)
+* Guilherme de Oliveira Silva (110012496)
+* Danilo José Bispo Galvão (120114852)
+* 
+*/
 #include "fattree.h"
 
 

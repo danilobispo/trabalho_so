@@ -1,6 +1,6 @@
 # My first makefile
 
-all: escalonador shutdown executa_postergado
+all: escalonador shutdown executa_postergado hipercubo
 
 escalonador: escalonador.o fattree.o torus.o global.h
 	gcc -o escalonador fattree.o torus.o escalonador.o global.h
@@ -25,4 +25,4 @@ executa_postergado: executa_postergado.c
 	gcc -o executa_postergado executa_postergado.c 
 
 clean:
-	rm -rf *.o *~ escalonador shutdown executa_postergado
+	rm -rf *.o *~ escalonador shutdown executa_postergado hipercubo

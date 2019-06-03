@@ -1,6 +1,10 @@
-//
-// Created by danilo on 24/05/19.
-//
+/*
+* Grupo:
+* Laís Mendes Gonçalves (110033647)
+* Guilherme de Oliveira Silva (110012496)
+* Danilo José Bispo Galvão (120114852)
+* 
+*/
 
 #ifndef TRABALHO_SO_TORUS_H
 #define TRABALHO_SO_TORUS_H
