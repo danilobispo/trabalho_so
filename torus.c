@@ -220,21 +220,21 @@ void criaProcessosTorus()
     /* Ou seja, os filhos*/
     if (getpid() != pid_principal)
     {
-        printf("Meu pid: %d | Meu ref: %d\n", getpid(), no_ref);
+        // printf("Meu pid: %d | Meu ref: %d\n", getpid(), no_ref);
         executaProgramaNosTorus();
         // executa_programa();
     }
     // DEBUG
-    else {
-        for (i = 0; i < n_nos_topologia; i++)
-        {
-            printf("tabproc[%d]\tpid: %d\tno_ref:%d\t livre: %d\n", i, tab_proc[i].pid, tab_proc[i].no_ref, tab_proc[i].livre);
-            printf("NoTorus[%d]\tpid: %d\tnoId:%d\n", i, noTorus[i].pid, noTorus[i].noId);
-        }
+    // else {
+    //     for (i = 0; i < n_nos_topologia; i++)
+    //     {
+    //         printf("tabproc[%d]\tpid: %d\tno_ref:%d\t livre: %d\n", i, tab_proc[i].pid, tab_proc[i].no_ref, tab_proc[i].livre);
+    //         printf("NoTorus[%d]\tpid: %d\tnoId:%d\n", i, noTorus[i].pid, noTorus[i].noId);
+    //     }
         
-    //     // aciona_execucao_prog("./a.out", "a");
+    // //     // aciona_execucao_prog("./a.out", "a");
         
-    }
+    // }
 }
 
 /**
@@ -251,7 +251,7 @@ void executaProgramaNosTorus(){
 
 		}
 		else {    
-            printf("Recebi | mtype: %ld\n", msg.mtype);
+            // printf("Recebi | mtype: %ld\n", msg.mtype);
             
             if(msg.mtype == 1 && msg.operacao == TYPE_EXEC){
                 valor = TYPE_NO_1;
@@ -260,19 +260,19 @@ void executaProgramaNosTorus(){
                         valor = calculaCaminho(msg, i+1, valor);
                     }
                 }
-                tempos[0] = clock();
+                tempos[0] = time(NULL);
 		    	trata_mensagem_torus(msg.mtext, msg.prog);
-		    	tempos[1] = clock();
+		    	tempos[1] = time(NULL);
                 fflush(stdout);
                 fim_programa_torus(tempos[0], tempos[1]);
             }
             // Se o no de destino for o mesmo mtype
             // Então eh pra executar
             if(msg.mtype == msg.no_dest && msg.mtype != TYPE_FIN){ 
-                printf("Executarei | mtype: %ld\n", msg.mtype);
-                tempos[0] = clock();
+                // printf("Executarei | mtype: %ld\n", msg.mtype);
+                tempos[0] = time(NULL);
 		    	trata_mensagem_torus(msg.mtext, msg.prog);
-		    	tempos[1] = clock();
+		    	tempos[1] = time(NULL);
                 fflush(stdout);
                 fim_programa_torus(tempos[0], tempos[1]);                
             }
@@ -440,7 +440,6 @@ int isVizinho(int no_ref, int no)
 
 void trata_mensagem_torus(char *caminho_prog, char *programa)
 {
-    printf("trata_mensagem_torus!!\n");
 	pid_t pid_exec;
 	int status;
 
@@ -501,10 +500,10 @@ void fim_programa_torus(unsigned long time_ini, unsigned long time_end)
                 if(msg.mtype == TYPE_NO_1 && msg.no_dest == TYPE_NO_1){
                 msg.mtype = TYPE_ESC;
                     if(msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0){
-                        printf("Não mandei mensagem");
-                        fflush(stdout);
+                        // printf("Não mandei mensagem");
+                        // fflush(stdout);
                     } else {
-                        printf("Mandei mensagem | msgid_fila_topologia: %d", msgid_fila_topologia);
+                        // printf("Mandei mensagem | msgid_fila_topologia: %d", msgid_fila_topologia);
                     }
                 }
                 for(i; i > 0; i--){
@@ -514,7 +513,7 @@ void fim_programa_torus(unsigned long time_ini, unsigned long time_end)
                             msg.mtype = TYPE_ESC;
                             if(msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0){} 
                             else {
-                                printf("Mandei mensagem | msgid_fila_topologia: %d", msgid_fila_topologia);
+                                // printf("Mandei mensagem | msgid_fila_topologia: %d", msgid_fila_topologia);
                             }
                         }
                     }

@@ -6,6 +6,8 @@
 int main(int argc, char const *argv[])
 {
 	msg_postergado msg;
+	const char delimitador_barra[2] = "/";
+   	char *token;
 
 	// Pegando a topologia e verificando formato
 	if ((argc > 2) || (argc < 2)){
@@ -80,7 +82,7 @@ void cria_fila_shutdown(void)
 	pid_principal = getpid();
 
 	if (( msgid_shutdown = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
-	     perror("Erro de msgget") ;
+	     //perror("Erro de msgget") ;
 	}
 	else
 	{
@@ -93,11 +95,10 @@ void cria_fila_shutdown(void)
 		(void) strcpy(msg.mtext,"pid escalonador") ;
 
 		if (msgsnd(msgid_shutdown, &msg, TAM_TOTAL_MSG, 0) < 0) {
-			perror("[ESCALONADOR]Erro no envio da mensagem") ;
+			//perror("[ESCALONADOR]Erro no envio da mensagem") ;
 		}
 		////////
 	}
-
 }
 
 /*
@@ -110,7 +111,7 @@ void cria_fila_mensagem_postergado(void)
     key_fila_msg = KEY_ESC_POSTERGADO;
 
 	if (( msgid_postergado = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
-	     perror("Erro de msgget") ;
+	    //perror("Erro de msgget") ;
 	}
 }
 
@@ -152,7 +153,26 @@ void recebi_msg_postergado (void){
 		else
 		{	programa_executado = 0;
 
+
+			printf("\nJob: %d\n", msg.job);
+			printf("Delay: %d\n", msg.tempo_delay);
+			printf("Nome: %s\n", msg.nome_programa);
+			printf("Type %ld\n", msg.mtype);
+
 			strcpy(tab_job[cont_job].nome_programa,msg.nome_programa);
+
+			//quebrando string
+			const char delimitador_barra[2] = "/";
+			const char delimitador_ponto[2] = ".";
+  			char *token;
+			char nome_programa_aux[100];
+			token = strtok(msg.nome_programa, delimitador_barra);
+			token = strtok(NULL, delimitador_barra);
+			strcpy (nome_programa_aux,token);
+			token = strtok(nome_programa_aux, delimitador_ponto);
+
+			strcpy(tab_job[cont_job].nome_programa_sem_path,token);
+			
 			tab_job[cont_job].tempo_delay = msg.tempo_delay;
 			tab_job[cont_job].inicio = time(NULL);
 			tab_job[cont_job].tempo_futuro = tab_job[cont_job].tempo_delay + tab_job[cont_job].inicio;
@@ -161,16 +181,11 @@ void recebi_msg_postergado (void){
 
 			busc_prox_prog();
 
-			printf("\nJob: %d\n", msg.job);
-			printf("Delay: %d\n", msg.tempo_delay);
-			printf("Nome: %s\n", msg.nome_programa);
-			printf("Type %ld\n", msg.mtype);
-
 			cont_job++;
 			msg.job = cont_job;
 			msg.mtype = TYPE_ESC_JOBS;
 			if(msgsnd(msgid_postergado, &msg, sizeof(msg), 0)<0){
-				perror("[escalonador]Erro de msgget") ;
+				//perror("[escalonador]Erro de msgget") ;
 			}
 
 		}
@@ -264,7 +279,7 @@ void inicializa_topologia_escolhida(void)
 	}
 	else if (topologia == 'T')
 	{
-		printf("Topologia Torus");
+		//printf("Topologia Torus");
 
 		start_torus();
 	}
@@ -347,7 +362,7 @@ void cria_fila_mensagem(void)
     key_fila_msg = KEY_FAT_TREE;
 
 	if (( msgid_fila_topologia = msgget(key_fila_msg, IPC_CREAT|0666)) == -1) {
-	     perror("Erro de msgget") ;
+	    //perror("Erro de msgget") ;
 	}
 }
 
@@ -363,19 +378,35 @@ void ordem_executa_programa(char *caminho_prog, char *programa, int n_nos)
 	* enviado para o escalonador dados do processo
 	* notificando que já foi criado e está livre
 	*/
-	msg.mtype  = TYPE_NO_1;
-	msg.pid = pid_principal;
-	msg.no_source = TYPE_ESC;
-	msg.no_dest = TYPE_ALL;
-	msg.livre = false;
-	msg.operacao = TYPE_EXEC;
-	(void) strcpy(msg.mtext,caminho_prog) ;
-	(void) strcpy(msg.prog,programa) ;
+	if(topologia == 'H')
+	{
+		msg.mtype  = TYPE_NO_1;
+		msg.pid = cont_job-1;
+		msg.no_source = TYPE_ESC;
+		msg.no_dest = TYPE_ALL;
+		msg.livre = false;
+		msg.operacao = TYPE_EXEC;
+		(void) strcpy(msg.mtext,caminho_prog) ;
+		(void) strcpy(msg.prog,programa) ;
+	}
+	else
+	{
+		msg.mtype  = TYPE_NO_1;
+		msg.pid = pid_principal;
+		msg.no_source = TYPE_ESC;
+		msg.no_dest = TYPE_ALL;
+		msg.livre = false;
+		msg.operacao = TYPE_EXEC;
+		(void) strcpy(msg.mtext,caminho_prog) ;
+		(void) strcpy(msg.prog,programa) ;
+	}
+	
 
 	if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
-	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
+	   //perror("[ESCALONADOR]Erro no envio da mensagem") ;
 	}
 
+	
 
 	for (int i = 0; i < n_nos; ++i)
 	{
@@ -398,13 +429,12 @@ void infos_fila_msg(void)
 				break;
 			}
 		}
-		
 	}
 	else if (topologia == 'T')
 	{
 		/*  recuperacao do id da fila de mensagens da topologia hypercubo      */
 		if ((msgid_fila_topologia = msgget(KEY_TORUS,0)) == -1) {
-			perror("Erro na criacao da fila do torus") ;
+			//perror("Erro na criacao da fila do torus") ;
 		}
 
 	}
@@ -434,14 +464,14 @@ int is_todos_livres(int n_nos)
 
 void aciona_execucao_prog(char *caminho_prog, char *programa, int n_nos)
 {
-	printf("VOU EXECUTAR");
-	fflush(stdout);
 	if (is_todos_livres(n_nos))
 	{
 		ordem_executa_programa(caminho_prog, programa, n_nos);
-		printf("------>>>Saiu do ordem executa");
-		fflush(stdout);
-		espera_resultado_execucao(n_nos);
+		
+		if (topologia != 'H')
+		{
+			espera_resultado_execucao(n_nos);
+		}
 	}
 	else
 	{
@@ -460,9 +490,6 @@ void espera_resultado_execucao(int n_nos)
 	int index;
 	mensagem msg;
 
-	printf("[ESCALONADOR]Esperando o resultado | %d msg_fila_top: %d", n_nos, msgid_fila_topologia);
-	fflush(stdout);
-
 	while(contador_no_ref < n_nos)
 	{
 			// printf("[ESCALONADOR]Esperando o resultado");
@@ -479,13 +506,26 @@ void espera_resultado_execucao(int n_nos)
 
 					if (index != -1)
 					{
-						printf("[ESCALONADOR]PROCESSO %d finalizou | %lu -> %lu\n", tab_proc[index].no_ref, msg.time_ini, msg.time_end);
-						fflush(stdout);
+						//printf("[ESCALONADOR]PROCESSO %d finalizou | %lu -> %lu\n", tab_proc[index].no_ref, msg.time_ini, msg.time_end);
+						//fflush(stdout);
 						marca_gerente_livre(msg.pid, msg.time_ini, msg.time_end, n_nos);
 
 						
 					}
 				} 
+
+				//calcular makespan
+				if(menor_tempo_inicio > msg.time_ini)
+				{
+					menor_tempo_inicio = msg.time_ini;
+				}
+
+				if (maior_tempo_fim < msg.time_end)
+				{
+					maior_tempo_fim = msg.time_end;
+				}
+
+
 				contador_no_ref++;
 			// }
 		}
@@ -525,17 +565,6 @@ int search_proc(int ref, int option)
 
 void marca_gerente_livre(int ref, unsigned long time_ini, unsigned long time_end, int n_nos)
 {
-	if(menor_tempo_inicio > time_ini)
-	{
-		menor_tempo_inicio = time_ini;
-	}
-
-	if (maior_tempo_fim < time_end)
-	{
-		maior_tempo_fim = time_end;
-	}
-
-
 	if (topologia != 'H')
 	{
 		for (int i = 0; i < n_nos; ++i)
@@ -617,7 +646,7 @@ void exclui_fila_mensagem(int id_da_fila)
 	}
 	else
 	{
-		printf("EXCLUI LISTA DE MENSAGEM\n");
+		printf("\nEXCLUI LISTA DE MENSAGEM\n");
 	}
 }
 

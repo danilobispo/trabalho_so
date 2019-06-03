@@ -52,7 +52,7 @@ time_t timer_final;
 struct tm *horarioLocal_inicio;
 struct tm *horarioLocal_final;
 
-clock_t tempos[2];
+time_t tempos[2];
 
 // Funcoes de torus.c
 void criaNosTorus();

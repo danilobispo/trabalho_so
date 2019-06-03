@@ -15,7 +15,7 @@ int programa_executado = 0;
 
 //varáveis globais
 int cont_job = 0, menor_job = 0, menor_delay = 10000;
-time_t menor_tempo_inicio = 0;
+time_t menor_tempo_inicio = 9000000000;
 time_t maior_tempo_fim = 0;
 
 void inicia_tab_jobs(void);
