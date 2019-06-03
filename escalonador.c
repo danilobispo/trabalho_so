@@ -350,30 +350,40 @@ void ordem_executa_programa(char *caminho_prog, char *programa, int n_nos)
 	* enviado para o escalonador dados do processo
 	* notificando que já foi criado e está livre
 	*/
-	msg.mtype  = TYPE_NO_1;
-	msg.pid = pid_principal;
-	msg.no_source = TYPE_ESC;
-	msg.no_dest = TYPE_ALL;
-	msg.livre = false;
-	msg.operacao = TYPE_EXEC;
-	(void) strcpy(msg.mtext,caminho_prog) ;
-	(void) strcpy(msg.prog,programa) ;
+	if(topologia == 'H')
+	{
+		msg.mtype  = TYPE_NO_1;
+		msg.pid = cont_job-1;
+		msg.no_source = TYPE_ESC;
+		msg.no_dest = TYPE_ALL;
+		msg.livre = false;
+		msg.operacao = TYPE_EXEC;
+		(void) strcpy(msg.mtext,caminho_prog) ;
+		(void) strcpy(msg.prog,programa) ;
+	}
+	else
+	{
+		msg.mtype  = TYPE_NO_1;
+		msg.pid = pid_principal;
+		msg.no_source = TYPE_ESC;
+		msg.no_dest = TYPE_ALL;
+		msg.livre = false;
+		msg.operacao = TYPE_EXEC;
+		(void) strcpy(msg.mtext,caminho_prog) ;
+		(void) strcpy(msg.prog,programa) ;
+	}
+	
 
 	if (msgsnd(msgid_fila_topologia, &msg, TAM_TOTAL_MSG, 0) < 0) {
 	   perror("[ESCALONADOR]Erro no envio da mensagem") ;
 	}
 
 	
-	printf("[ESCALONADOR] mandei executar\n");
-	fflush(stdout);
 
 	for (int i = 0; i < n_nos; ++i)
 	{
 		tab_proc[i].livre = 0;
 	}
-
-	printf("[ESCALONADOR] todos ocupados\n");
-	fflush(stdout);
 }
 
 //organiza as infos das filas de acordo com cada topologia
@@ -433,7 +443,10 @@ void aciona_execucao_prog(char *caminho_prog, char *programa, int n_nos)
 		printf("VOU EXPERAR MENSAGENS\n");
 		fflush(stdout);
 
-		espera_resultado_execucao(n_nos);
+		if (topologia != 'H')
+		{
+			espera_resultado_execucao(n_nos);
+		}
 	}
 	else
 	{

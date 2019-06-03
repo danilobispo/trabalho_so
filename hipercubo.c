@@ -53,6 +53,8 @@ void recebe_mensagem_hipercubo( tabela_processos *,  mensagem *, int, int *);
 
 void envia_reverso_mensagem_hipercubo( tabela_processos *,  mensagem *,  mensagem *, int ,  mensagem *);
 
+void makespan(mensagem *);
+
 int main(){
   	pid_t pid; 
 	int idfila, idfila_volta, idfila_esc, estado;
@@ -158,10 +160,12 @@ int main(){
  		}
 		printf("\n");
 
-		printf("[HIPER]ID FILA = %d", idfila_esc);
-		fflush(stdout);
+		makespan(&tabela);
 
-		sleep(30);
+		/*printf("[HIPER]ID FILA = %d", idfila_esc);
+		fflush(stdout);*/
+
+		sleep(12);
 		if(msgctl(idfila, IPC_RMID, &mensagem_env) != 0)
 			printf("erro na exclusao mensagem_env\n");
 		else
@@ -171,9 +175,22 @@ int main(){
 			printf("erro na exclusao mensagem_env\n");
 		else
 			printf("-----tudo certo na exclusao mensagem_env\n");
+		
+		if(msgctl(idfila_esc, IPC_RMID, &mensagem_env) != 0)
+			printf("erro na exclusao mensagem_env\n");
+		else
+			printf("-----tudo certo na exclusao mensagem_env\n");
+		/*i=0;
+		while(i<15){
+			if(wait(&estado)>0){
+				i++;
+			}}
 
+	}else{
+		kill(getpid(), SIGKILL);
+	}*/
 	}
-	
+
 	exit(0);
 	return 0;}
 
@@ -898,7 +915,15 @@ void envia_reverso_mensagem_hipercubo( tabela_processos *proprio,  mensagem *men
 }
 
 
-
+void makespan (mensagem *m){
+	int i;
+	int min, max;
+	for(i=1; i < N-1; i++){
+		min = m[i].time_ini < m[i+1].time_ini ?  m[i].time_ini : m[i+1].time_ini;
+		max = m[i].time_end > m[i+1].time_end ?  m[i].time_end :  m[i+1].time_end;
+	}
+	printf("Makespan: %d\n", (max-min));
+}
 
 
 
