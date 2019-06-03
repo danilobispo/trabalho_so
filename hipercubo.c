@@ -82,40 +82,45 @@ int main(){
 	//começa pelo pai, então é 0. Os demais terão que atualizar esse valor.
 	proprio.no_ref = 0;
 
+	//cria filas de mensagem para preencher o hipercubo
    	if ((idfila = msgget(100012311, IPC_CREAT|0x1B6)) < 0)
    	{
      		printf("erro na criacao da fila 1\n");
      		exit(1);
    	}   	
+	//cria fila de mensagens para retornar as mensagens ao no 0
 	if ((idfila_volta = msgget(100012312, IPC_CREAT|0x1B6)) < 0)
    	{
      		printf("erro na criacao da fila 2\n");
      		exit(1);
    	}   	
+	//cria fila de mensagem que se comunica com o escalonador
 	if ((idfila_esc = msgget(100012313, IPC_CREAT|0x1B6)) < 0)
    	{
      		printf("erro na criacao da fila 3\n");
      		exit(1);
    	}
 
+	//espera ate receber uma mensagem do escalonador, quando recebe continua o programa
 	while(1){
-
 		if(msgrcv(idfila_esc, &mensagem_rec, sizeof(mensagem_rec), 1, IPC_NOWAIT)<0){
 			//perror("\nErro no no 1");
 			fflush(stdout);
 		}else{
-
 			break;
 		}
 	}
 
+	//pega as informacoes do da mensagem recebida pelo escalonador
 	job = mensagem_rec.pid;
 	strcpy(nome,mensagem_rec.mtext);
 	strcpy(mensagem_env.prog, mensagem_rec.prog);
 	strcpy(mensagem_env.mtext, mensagem_rec.mtext);
 
+	//funcao que cria os processos filhos e os batiza segundo seus no_refs (numero indentificadcor de no)
 	cria_familia_hipercubo(filhos, &proprio, idfila, &mensagem_env,  &pid_pai);
 	
+	//cada no envia a mensagem aos nos a esse ligado, mas nao antes de 
 	i=0;
 	while(recebeu==0){
 		//só envia uma vez
