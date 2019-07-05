@@ -402,6 +402,10 @@ void roteamento_msg(mensagem msg)
 	}
 }
 
+
+//verificando se o processo é folha
+//se for retorna 1 e entao ele nao precisa passar para baixo a mensagem
+//e nem roteia para ninguem
 int is_folha(void)
 {
 	for (int i = 0; i < 8; ++i)
